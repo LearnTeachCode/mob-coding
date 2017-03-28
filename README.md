@@ -17,9 +17,9 @@ A mob programming web app for real-time collaboration at in-person events. The g
 **Goals for Version 1.0.0:**
 
 - Just a turn-based, collaborative plain text box!
-- Countdown timer displays the remaining for each player and resets after each turn
+- Countdown timer displays the remaining time for each player and resets after each turn
 - Players can enter their name or stay anonymous
-- List of active players shows their names, highlights whose turn it is
-- App displays who has the current turn, and who has the next turn
-- App gets the user's attention somehow when it's their turn and when their turn is next
+- Active player list displays names and highlights whose turn it is
+- App displays who has the current turn and who has the next turn
+- App gets the user's attention somehow when it's their turn
 - Tools: NodeJS, Express, SocketIO, plain vanilla JavaScript and HTML/CSS
