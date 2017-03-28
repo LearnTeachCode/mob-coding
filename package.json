@@ -1,0 +1,36 @@
+{
+  "name": "mob-coding",
+  "version": "1.0.0",
+  "description": "A mob programming web app for real-time collaboration at in-person events.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LearningNerd/mob-coding.git"
+  },
+  "keywords": [
+    "mob",
+    "programming",
+    "mobbing",
+    "pair",
+    "programming",
+    "collaboration",
+    "education",
+    "meetups",
+    "groups",
+    "mob",
+    "mob",
+    "program",
+    "mob",
+    "coding",
+    "pairing"
+  ],
+  "author": "Liz Krane",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LearningNerd/mob-coding/issues"
+  },
+  "homepage": "https://github.com/LearningNerd/mob-coding#readme",
+  "dependencies": {
+    "socketio": "^1.0.0"
+  }
+}
