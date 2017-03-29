@@ -24,9 +24,9 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - App gets the user's attention somehow when it's their turn
 - Tools: NodeJS, Express, SocketIO, plain vanilla JavaScript and HTML/CSS
 
-## Log
+## Project Log
 
-### 2017/03/28
+### 2017-03-28
 
 **Questions:**
 
@@ -58,3 +58,22 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - Server function: receive and broadcast events based on data from clients
 - Server function: broadcast events when users connect or disconnect
 - Server state: keep track of list of user IDs, names, whose turn it is, who's next, and elapsed time for each turn
+
+### 2017-03-29
+
+**Milestones:**
+
+- Version 0 (branch `v0-shared-editor`): collaborative real-time text-editing now works, yay! Just a simple shared text editor.
+
+**Questions:**
+- What's the difference between the [`input` event](https://developer.mozilla.org/en-US/docs/Web/Events/input) and something like `keyup`? (Apparently `input` fires only if it changes the input, whereas `keyup` fires for pressing any key, even one that doesn't actually type anything. Not supported in IE < 9.)
+
+- Is there a nifty library for styling console.log messages? (Or I can just write my own helper function.)
+
+- How do I commit new changes into a new branch in Git? ([Simple answer via StackOverflow](http://stackoverflow.com/a/1394804) )
+
+
+
+
+
+

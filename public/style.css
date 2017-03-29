@@ -7,6 +7,7 @@ Normalize: https://necolas.github.io/normalize.css/
 
 /* -------------------------------------------------
         LIST OF IDs, DYNAMIC ELEMENTS:
+        - editor        <textarea> collab code editor
         - timeleft      <p> shows minutes:seconds
         - currentturn   name of current player
         - nextturn      name of next player
