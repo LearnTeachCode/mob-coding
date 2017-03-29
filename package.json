@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "A mob programming web app for real-time collaboration at in-person events.",
   "author": "Liz Krane",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.15.2",
