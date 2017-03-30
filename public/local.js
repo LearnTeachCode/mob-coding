@@ -109,7 +109,7 @@ function handlePlayerListChange (playerList) {
 	var playerNameArray = playerIdArray.map(function(id){
 		return playerList[id];
 	});
-
+	console.log('playerNameArray:');
 	console.log(playerNameArray);
 
 	// Update the UI
@@ -127,9 +127,9 @@ function handleTurnChange (data) {
 	// need to prevent user from typing in the editor!
 
 	// Update UI:
-	updateCurrentTurnView(data);
-	updateNextCurrentTurnView(data);
-	toggleYourTurnView();
+	//updateCurrentTurnView(data);
+	//updateNextCurrentTurnView(data);
+	//toggleYourTurnView();
 }
 
 // MAYBE: handle clock sync events from server???
