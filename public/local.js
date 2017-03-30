@@ -18,7 +18,7 @@ var currentTurnView = document.getElementById('currentturn');
 var nextTurnView = document.getElementById('nextturn');
 var playerListView = document.getElementById('playerlist');
 var myNameInputView = document.getElementById('myname');
-
+var myNameListItemView = document.getElementById('me');
 /* ------------------------------------------------------------
 	EVENT LISTENERS	/ SEND DATA TO SERVER
 
@@ -42,6 +42,16 @@ var myNameInputView = document.getElementById('myname');
 -------------------------------------------------------------- */
 editorInputView.addEventListener('input', handleUserTyping);
 myNameInputView.addEventListener('input', handleUserNameChange);
+
+
+/* -------------------------------------------------
+	INITIALIZE APP (ON SOCKET CONNECTION)
+---------------------------------------------------- */
+socket.on('connect', function(){
+	// Update user's default name to match socket.id
+	myNameInputView.value = 'Anonymous-' + socket.id.slice(0,4);
+});
+
 
 // Send editorInputView data to server
 function handleUserTyping (event) {
@@ -78,11 +88,32 @@ function handleEditorChange (data) {
 }
 
 // When receiving new player list data from server
-function handlePlayerListChange (data) {
+function handlePlayerListChange (playerList) {
 	console.log('%c playerListChange event received!', 'color: blue; font-weight: bold;');
-	console.dir(data);
+	console.dir(playerList);
 
-	updatePlayerListView(data);
+	// Transform the data!!
+
+	// Transform into an array to more easily reorder it
+	var playerIdArray = Object.keys(playerList);
+
+	var userIndex = playerIdArray.indexOf(socket.id);
+	var playerListTopSegment = playerIdArray.slice(userIndex+1);
+	var playerListBottomSegment = playerIdArray.slice(0, userIndex);
+
+	// Merge the two arrays, reording so current user is at the top
+	// (but removed from this list), without modifying the turn order
+	playerIdArray = playerListTopSegment.concat(playerListBottomSegment);
+
+	// Generate an array of just usernames for updating the UI
+	var playerNameArray = playerIdArray.map(function(id){
+		return playerList[id];
+	});
+
+	console.log(playerNameArray);
+
+	// Update the UI
+	updatePlayerListView(playerNameArray);
 }
 
 // When receiving new myNameInputView data from server
@@ -116,8 +147,26 @@ function toggleYourTurnView () {
 }
 
 // Using data from server, update list of players
-function updatePlayerListView (playerListData) {
+function updatePlayerListView (playerNameArray) {	
+	// Delete the contents of playerListView each time
+	while (playerListView.firstChild) {
+    	playerListView.removeChild(playerListView.firstChild);
+	}
 
+	// Put li#me back into playerListView! (using previously saved reference)
+	playerListView.appendChild(myNameListItemView);
+
+	// Append player names to playerListView
+	playerNameArray.forEach(function(playerName){
+		
+		// Create an <li> node with player's name
+		var playerElement = document.createElement('li');
+		playerElement.textContent = playerName;
+
+		// Append to playerListView <ol>
+		playerListView.appendChild(playerElement);
+
+	});
 }
 
 // Using data from server, update text in code editor
@@ -140,5 +189,3 @@ function updateCurrentTurnView (playerName) {
 function updateNextCurrentTurnView (playerName) {
 
 }
-
-

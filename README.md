@@ -24,6 +24,7 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - App gets the user's attention somehow when it's their turn
 - Tools: NodeJS, Express, SocketIO, plain vanilla JavaScript and HTML/CSS
 
+
 ## Project Log
 
 ### 2017-03-28
@@ -59,6 +60,7 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - Server function: broadcast events when users connect or disconnect
 - Server state: keep track of list of user IDs, names, whose turn it is, who's next, and elapsed time for each turn
 
+
 ### 2017-03-29
 
 **Milestones:**
@@ -74,13 +76,15 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - How do I commit new changes into a new branch in Git? ([Simple answer via StackOverflow](http://stackoverflow.com/a/1394804) )
 
 
+### 2017-03-30
 
-**Next steps:**
+**Milestones:**
 
-- Set up list of IDs and names on server and implement handlePlayerListChange() on client! See the notes I made on paper about this.
+- 
 
+**Questions:**
 
-
+- 
 
 
 

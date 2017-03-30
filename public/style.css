@@ -13,6 +13,7 @@ Normalize: https://necolas.github.io/normalize.css/
         - nextturn      name of next player
         - playerlist    <ol> list of player names
         - myname        <input> user's name
+        - me            <li> containing current user
  --------------------------------------------------- */
 
 

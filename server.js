@@ -43,8 +43,10 @@ io.on('connection', function(socket){
 	// Add user ID/name to playerList as soon as they connect
 	playerList[socket.id] = 'Anonymous-' + socket.id.slice(0,4);
 
-	// Broadcast updated playerList
-	socket.broadcast.emit('playerListChange', playerList);
+	// Broadcast updated playerList to ALL clients
+	io.emit('playerListChange', playerList);
+
+	// TO DO: when new client connects, send them turn data!	
 
 	console.log(playerList);
 
