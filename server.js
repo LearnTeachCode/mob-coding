@@ -32,15 +32,36 @@ http.listen(port, function() {
 	- turnChange 		Broadcast: turnChange
 -------------------------------------------------------------- */
 
+var playerList = {};
+
 // When a user connects over websocket,
 io.on('connection', function(socket){
 
 	// Display this message in the server console
-	console.log('A user connected!');
+	console.log('A user connected!');	
+	
+	// Add user ID/name to playerList as soon as they connect
+	playerList[socket.id] = 'Anonymous-' + socket.id.slice(0,4);
 
-	// When a user disconnects, display message in server console
+	// Broadcast updated playerList
+	socket.broadcast.emit('playerListChange', playerList);
+
+	console.log(playerList);
+
+	// ------------------------- OTHER EVENTS ----------------------------------
+
+	// When a user disconnects,
 	socket.on('disconnect', function(){
-		console.log('A user disconnected!');
+		
+		console.log('A user disconnected!');		
+
+		// Remove from playerList
+		delete playerList[socket.id];
+
+		// Broadcast updated playerList
+		socket.broadcast.emit('playerListChange', playerList);
+
+		console.log(playerList);
 	});
 
 	// When "editorChange" event received, broadcast it back out
@@ -56,20 +77,21 @@ io.on('connection', function(socket){
 	socket.on('userNameChange', function(data) {
 		
 		console.log('userNameChange event received!');
-		console.log(data);
+		console.log(data);		
 
-		// TODO:
-			// updatePlayerList() 
+		// Update name property of this client in playerList
+		playerList[socket.id] = data;
 
-		socket.broadcast.emit('playerListChange', data);
+		// Broadcast updated playerList
+		socket.broadcast.emit('playerListChange', playerList);
+
+		console.log('updated playerList: ');
+		console.log(playerList);
 	});
 
 	// TO DO:
 		// implement 'turnChange' event with timer!
+		// track: current turn and next turn!
 		// send event to ALL clients at the right time
-
-	// TO DO:
-		// implement updatePlayerList
-		// track: IDs, names, current turn, next turn
 
 });	// End of SocketIO part of the code

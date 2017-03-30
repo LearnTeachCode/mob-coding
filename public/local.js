@@ -79,16 +79,16 @@ function handleEditorChange (data) {
 
 // When receiving new player list data from server
 function handlePlayerListChange (data) {
-	console.log('playerListChange event received!');
-	console.log('%c ' + data, 'color: blue; font-weight: bold;');
+	console.log('%c playerListChange event received!', 'color: blue; font-weight: bold;');
+	console.dir(data);
 
 	updatePlayerListView(data);
 }
 
 // When receiving new myNameInputView data from server
 function handleTurnChange (data) {
-	console.log('turnChange event received!');
-	console.log('%c ' + data, 'color: blue; font-weight: bold;');
+	console.log('%c turnChange event received!', 'color: blue; font-weight: bold;');
+	console.dir(data);
 
 	// Several things will happen when the turn changes!
 
@@ -142,11 +142,3 @@ function updateNextCurrentTurnView (playerName) {
 }
 
 
-
-/* -------------------------------------------------
-	MISC TO DOs, NOTES and STUFF
-
-	- Is there a library for CSS styles for console.log?
-	  (or just write my own helper functions)
-
----------------------------------------------------- */
