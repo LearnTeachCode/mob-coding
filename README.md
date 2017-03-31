@@ -74,3 +74,9 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - Is there a nifty library for styling console.log messages? (Or I can just write my own helper function.)
 
 - How do I commit new changes into a new branch in Git? ([Simple answer via StackOverflow](http://stackoverflow.com/a/1394804) )
+
+### 2017-03-31
+
+**Milestones:**
+
+- Finished and cleaned up version 0 (branch `v0-shared-editor`), collaborative real-time text-editing (no turn-based system).

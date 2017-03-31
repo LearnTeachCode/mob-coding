@@ -31,6 +31,7 @@ http.listen(port, function() {
 -------------------------------------------------------------- */
 
 var playerList = {};
+var editorContent = '';
 
 // When a user connects over websocket,
 io.on('connection', function(socket){
@@ -46,6 +47,8 @@ io.on('connection', function(socket){
 	
 	console.log(playerList);
 
+	// Send current state of the text editor to the new client, to initialize!
+	socket.emit('editorChange', editorContent);
 
 	// When a user disconnects,
 	socket.on('disconnect', function(){
@@ -61,13 +64,16 @@ io.on('connection', function(socket){
 		console.log(playerList);
 	});
 
-	// When "editorChange" event received, broadcast it back out
+	// When "editorChange" event received, update editor state and broadcast it back out
 	socket.on('editorChange', function(data) {
 		
 		console.log('editorChange event received!');
 		console.log(data);
 
-		socket.broadcast.emit('editorChange', data);
+		// Update saved state of the shared text editor
+		editorContent = data;
+
+		socket.broadcast.emit('editorChange', editorContent);
 	});
 
 	// When "userNameChange" event received, broadcast it back out
