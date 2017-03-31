@@ -117,9 +117,10 @@ function handlePlayerListChange (playerList) {
 }
 
 // When receiving new myNameInputView data from server
-function handleTurnChange (data) {
+function handleTurnChange (turnData) {
 	console.log('%c turnChange event received!', 'color: blue; font-weight: bold;');
-	console.dir(data);
+	console.dir(turnData);
+	console.log(turnData.millisRemaining);
 
 	// Several things will happen when the turn changes!
 
@@ -127,9 +128,12 @@ function handleTurnChange (data) {
 	// need to prevent user from typing in the editor!
 
 	// Update UI:
-	//updateCurrentTurnView(data);
-	//updateNextCurrentTurnView(data);
+	updateTimeLeftView(turnData.millisRemaining);
+	updateCurrentTurnView(turnData.current.name);
+	updateNextCurrentTurnView(turnData.next.name);
+	
 	//toggleYourTurnView();
+
 }
 
 // MAYBE: handle clock sync events from server???
@@ -174,18 +178,45 @@ function updateEditorView (editorData) {
 	editorInputView.value = editorData;
 }
 
-// Update timeLeftView with the time remaining
-	// TODO: use requestAnimationFrame probably!!
-function updateTimeLeftView (timeRemaining) {
-	
+// Update timeLeftView with the time remaining	
+function updateTimeLeftView (timerDurationMillis) {
+
+	console.log('updateTimeLeftView CALLED with: ' + timerDurationMillis)
+
+	var start = null;
+
+	// Animate countdown timer
+	function step(timestamp) {
+		if (!start) start = timestamp;
+		console.log('start: ' + start);
+		console.log('timestamp: ' + timestamp);
+
+		var millisElapsed = (timestamp - start);
+		var millisRemaining = timerDurationMillis - millisElapsed;
+		
+		console.log('millisElapsed: ' + millisElapsed);
+		console.log('********* TIMER UPDATE: ' + millisRemaining);
+
+		var secondsRemaining = Math.floor(millisRemaining / 1000);
+		var minutes = Math.floor(secondsRemaining / 60);
+		var seconds = secondsRemaining % 60;
+
+		// Format mm:ss string, padded with zeroes if needed
+		timeLeftView.textContent = ((minutes.toString().length > 1) ? minutes.toString() : '0' + minutes.toString()) + ':' + ((seconds.toString().length > 1) ? seconds.toString() : '0' + seconds.toString());
+
+		if (millisElapsed < timerDurationMillis) {
+			window.requestAnimationFrame(step);
+		}
+	}
+	window.requestAnimationFrame(step);
 }
 
 // Update currentTurnView with current player's name
 function updateCurrentTurnView (playerName) {
-
+	currentTurnView.textContent = playerName;
 }
 
 // Update nextTurnView with next player's name
 function updateNextCurrentTurnView (playerName) {
-
+	nextTurnView.textContent = playerName;
 }

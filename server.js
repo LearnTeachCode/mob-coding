@@ -35,55 +35,15 @@ http.listen(port, function() {
 var playerData = {};
 var playerList = [];
 var timerId;
+var nextTurnChangeTimestamp;
 var currentPlayerIndex;
+const turnDuration = 5000;
 
 // When a user connects over websocket,
 io.on('connection', function(socket){
-
-	// Display this message in the server console
+	
 	console.log('A user connected!');	
 	
-
-	// Start turn timer when first user connects, if it isn't already running:
-	if (!timerId) {
-		console.log('Initializing turn timer!');
-
-		timerId = setInterval(() => {	  		
-
-	  		// CHANGE THE TURN AND BROADCAST TO CLIENTS
-
-	  		console.log('Time to change turns!');
-	  		
-	  		// If current client is first player, initialize!	  		
-	  		if (currentPlayerIndex == null) {
-	  			console.log('**** INITIALIZING FIRST PLAYER ******');
-	  			currentPlayerIndex = playerList.indexOf(socket.id);
-	  			console.log('currentPlayerIndex: ' + currentPlayerIndex);
-	  		// Otherwise, increment the current player
-	  		} else if (playerList.length > 1) {	  			
-	  			console.log('**** incrementing current player ++++ ******');
-	  			currentPlayerIndex = (currentPlayerIndex + 1) % playerList.length;
-	  			console.log('NEW currentPlayerIndex: ' + currentPlayerIndex);
-	  		}
-
-  			// Get other indeces, ids, and names
-  			var currentPlayerId = playerList[currentPlayerIndex];
-  			var currentPlayerName = playerData[currentPlayerId];
-  			console.log('now updating nextPlayerIndex, and currentPlayerIndex is: ' + currentPlayerIndex);
-  			var nextPlayerIndex = (currentPlayerIndex + 1) % playerList.length;
-  			console.log('NEW nextPlayer is: ' + nextPlayerIndex);
-  			var nextPlayerId = playerList[nextPlayerIndex];
-  			var nextPlayerName = playerData[nextPlayerId];
-
-	  		// Broadcast turnChange with data to ALL clients
-			io.emit('turnChange', {current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}});
-
-			//console.log({current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}});
-
-		}, 1500);
-	}
-	
-
 	// Add user ID/name to playerList as soon as they connect
 	playerData[socket.id] = 'Anonymous-' + socket.id.slice(0,4);
 	playerList.push(socket.id);
@@ -91,8 +51,41 @@ io.on('connection', function(socket){
 	// Broadcast updated playerList to ALL clients
 	io.emit('playerListChange', playerData);
 
-	// TO DO: when new client connects, send them turn data!	
+	// When first user connects (if turn timer isn't already running):
+	if (!timerId) {
+		console.log('Initializing turn timer!');
 
+		// Initialize time of next turn change (will use this to sync the clients)
+		nextTurnChangeTimestamp = Date.now() + turnDuration;
+
+		console.log( new Date(nextTurnChangeTimestamp).toString() )
+
+		// Initialize the turn data when first user connects
+		changeTurn(socket.id);		
+
+		// Every time the timer goes off, change turn again and broadcast the data
+		timerId = setInterval(() => {	  			  		
+	  		console.log('Time to change turns!');
+
+	  		// Update time of next turn change
+	  		nextTurnChangeTimestamp = Date.now() + turnDuration;
+
+			changeTurn(socket.id);
+
+			// Broadcast turnChange with data to ALL clients
+			io.emit( 'turnChange', getTurnData() );
+
+			console.log( getTurnData() );
+		}, turnDuration); // TO DO: enable user-specified turn length
+	}
+		
+	// Also broadcast current turn data to the one client who just connected
+	socket.emit( 'turnChange', getTurnData() );
+
+	console.log('----------------- initial turnData broadcasted:');
+	console.log( getTurnData() );
+
+	console.log(' ! ! !   ! ! !   player data and list   ! ! !    ! ! !');
 	console.log(playerData);
 	console.log(playerList);
 
@@ -105,10 +98,10 @@ io.on('connection', function(socket){
 
 		// Remove from playerList
 		delete playerData[socket.id];
-		playerList.slice( playerList.indexOf(socket.id), 1);
+		playerList.splice( playerList.indexOf(socket.id), 1);
 
 		// Broadcast updated playerList
-		socket.broadcast.emit('playerListChange', playerList);
+		socket.broadcast.emit('playerListChange', playerData);
 
 		// If no players are left, reset the game!
 		if (playerList.length === 0) {
@@ -116,8 +109,10 @@ io.on('connection', function(socket){
 			currentPlayerIndex = null;
 			clearInterval(timerId);
 			timerId = null;
+			nextTurnChangeTimestamp = null;
 		}
 
+		console.log(playerData);
 		console.log(playerList);
 	});
 
@@ -152,3 +147,36 @@ io.on('connection', function(socket){
 		// send event to ALL clients at the right time
 
 });	// End of SocketIO part of the code
+
+
+
+/* -------------------------------------------------
+	FUNCTIONS
+---------------------------------------------------- */
+
+function changeTurn(socketId) {
+	// If current client is first player, initialize!	  		
+	if (currentPlayerIndex == null) {
+		console.log('*************** INITIALIZING FIRST PLAYER **************');
+		currentPlayerIndex = playerList.indexOf(socketId);
+		console.log('currentPlayerIndex: ' + currentPlayerIndex);
+	// Otherwise, increment the current player
+	} else if (playerList.length > 1) {	  			
+		console.log('+ + + Incrementing currentPlayerIndex + + +');
+		currentPlayerIndex = (currentPlayerIndex + 1) % playerList.length;
+		console.log('NEW currentPlayerIndex: ' + currentPlayerIndex);
+	}
+}
+
+// Returns turnChange object for the current turn
+function getTurnData() {
+	var currentPlayerId = playerList[currentPlayerIndex];
+	var currentPlayerName = playerData[currentPlayerId];
+	
+	var nextPlayerIndex = (currentPlayerIndex + 1) % playerList.length;
+	
+	var nextPlayerId = playerList[nextPlayerIndex];
+	var nextPlayerName = playerData[nextPlayerId];
+
+	return {millisRemaining: nextTurnChangeTimestamp - Date.now(), current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}};
+}

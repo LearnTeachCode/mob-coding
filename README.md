@@ -76,15 +76,26 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - How do I commit new changes into a new branch in Git? ([Simple answer via StackOverflow](http://stackoverflow.com/a/1394804) )
 
 
-### 2017-03-30
+### 2017-03-31
 
 **Milestones:**
 
-- 
+- Version 1 (branch `v1-turnbased-simple`): Turn-based system now mostly works!
+
+**Next steps:**
+
+- Housekeeping: make new branch for turn-based version and remove commits from branch for non-turn-based version 0.
+
+- Housekeeping: remove unused UI elements from non-turn-based version 0 branch.
+
+- Small fix: when new clients connect, send them the curent state of the collaborative text editor!
+
+- Small fix: when client receives name change event, update "current turn" and "next turn" views also!
+
+- Small fix: if user disconnects, turn off the timer animation and stop it at 00:00 (or even better, notify the user of their connection status!)
+
+- Next important step: prevent users from typing in the text box when it's not their turn!
 
 **Questions:**
 
-- 
-
-
-
+- When a user is temporarily disconnected and then reconnects, what's the best way to maintain their state in the game? (Currently they lose their place in the turn order, and their username is reset.)
