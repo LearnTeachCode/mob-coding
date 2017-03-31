@@ -19,17 +19,15 @@ http.listen(port, function() {
 	EVENT NAMES: 		SERVER FUNCTIONS:
 
 	- connection 		Broadcast: playerListChange
-						***updatePlayerList
+						***updatePlayerListView
 
 	- disconnect 		Broadcast: playerListChange
-						***updatePlayerList
+						***updatePlayerListView
 
 	- userNameChange	Broadcast: playerListChange
-						*** updatePlayerList
+						*** updatePlayerListView
 
-	- editorChange		Broadcast: editorChange				
-
-	- turnChange 		Broadcast: turnChange
+	- editorChange		Broadcast: editorChange
 -------------------------------------------------------------- */
 
 var playerList = {};
@@ -45,12 +43,9 @@ io.on('connection', function(socket){
 
 	// Broadcast updated playerList to ALL clients
 	io.emit('playerListChange', playerList);
-
-	// TO DO: when new client connects, send them turn data!	
-
+	
 	console.log(playerList);
 
-	// ------------------------- OTHER EVENTS ----------------------------------
 
 	// When a user disconnects,
 	socket.on('disconnect', function(){
@@ -90,10 +85,5 @@ io.on('connection', function(socket){
 		console.log('updated playerList: ');
 		console.log(playerList);
 	});
-
-	// TO DO:
-		// implement 'turnChange' event with timer!
-		// track: current turn and next turn!
-		// send event to ALL clients at the right time
 
 });	// End of SocketIO part of the code

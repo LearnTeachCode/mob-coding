@@ -8,9 +8,6 @@ Normalize: https://necolas.github.io/normalize.css/
 /* -------------------------------------------------
         LIST OF IDs, DYNAMIC ELEMENTS:
         - editor        <textarea> collab code editor
-        - timeleft      <p> shows minutes:seconds
-        - currentturn   name of current player
-        - nextturn      name of next player
         - playerlist    <ol> list of player names
         - myname        <input> user's name
         - me            <li> containing current user
@@ -26,14 +23,6 @@ body {
   margin: 0 auto;
   padding: 20px;
   font-family: Verdana, sans-serif;
-}
-
-.time {
-  box-sizing: border-box;
-  width: 70%;  
-  margin: 0 auto;
-  text-align: center;  
-  padding-right: 30%;
 }
 
 .main {
@@ -87,23 +76,6 @@ input {
     margin-bottom: 1em;
 }
 
-#currentturn, #nextturn {    
-  font-size: 1.1em;  
-}
-
-.timelabel {
-  margin: 0;
-  padding: 0;
-  text-align: center;
-}
-
-#timeleft {
-  text-align: center;
-  font-size: 4em;
-  margin: 0;
-  padding: 0;
-}
-
 
 /* -------------------------------------------------
         MOBILE LAYOUT (temporary fix)
@@ -113,7 +85,7 @@ input {
 
 @media (max-width: 720px) {
   
-  .time, .main, .sidebar {    
+  .main, .sidebar {    
     width: 100%;
     float: none;
     padding-left: 0;

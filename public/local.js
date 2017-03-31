@@ -6,16 +6,10 @@ var socket = io();
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
     - editor       	 	<textarea> collab code editor
-    - timeleft      	<p> shows minutes:seconds
-    - currentturn   	name of current player
-    - nextturn     		name of next player
     - playerlist   		<ol> list of player names
     - myname       		<input> user's name
 ---------------------------------------------------- */
 var editorInputView = document.getElementById('editor');
-var timeLeftView = document.getElementById('timeleft');
-var currentTurnView = document.getElementById('currentturn');
-var nextTurnView = document.getElementById('nextturn');
 var playerListView = document.getElementById('playerlist');
 var myNameInputView = document.getElementById('myname');
 var myNameListItemView = document.getElementById('me');
@@ -36,9 +30,7 @@ var myNameListItemView = document.getElementById('me');
 
 	- userNameChange	Send: 		handleUserNameChange
 
-	- playerListChange 	Receive: 	handlePlayerListChange						
-
-	- turnChange 		Receive: 	handleTurnChange
+	- playerListChange 	Receive: 	handlePlayerListChange							
 -------------------------------------------------------------- */
 editorInputView.addEventListener('input', handleUserTyping);
 myNameInputView.addEventListener('input', handleUserNameChange);
@@ -77,7 +69,6 @@ function handleUserNameChange (event) {
 ---------------------------------------------------- */
 socket.on('editorChange', handleEditorChange);
 socket.on('playerListChange', handlePlayerListChange);
-socket.on('turnChange', handleTurnChange);
 
 // When receiving new editorInputView data from server
 function handleEditorChange (data) {
@@ -116,35 +107,9 @@ function handlePlayerListChange (playerList) {
 	updatePlayerListView(playerNameArray);
 }
 
-// When receiving new myNameInputView data from server
-function handleTurnChange (data) {
-	console.log('%c turnChange event received!', 'color: blue; font-weight: bold;');
-	console.dir(data);
-
-	// Several things will happen when the turn changes!
-
-	// If user is current player,
-	// need to prevent user from typing in the editor!
-
-	// Update UI:
-	updateCurrentTurnView(data);
-	updateNextCurrentTurnView(data);
-	toggleYourTurnView();
-}
-
-// MAYBE: handle clock sync events from server???
-
-
 /* -------------------------------------------------
 	FUNCTIONS TO UPDATE VIEWS	
 ---------------------------------------------------- */
-
-// Do something to notify user when it's their turn
-function toggleYourTurnView () {
-	// maybe just toggle a CSS class on the <body>?
-	// or send a notification somehow? an alert() ?
-	// or play a sound?
-}
 
 // Using data from server, update list of players
 function updatePlayerListView (playerNameArray) {	
@@ -172,20 +137,4 @@ function updatePlayerListView (playerNameArray) {
 // Using data from server, update text in code editor
 function updateEditorView (editorData) {
 	editorInputView.value = editorData;
-}
-
-// Update timeLeftView with the time remaining
-	// TODO: use requestAnimationFrame probably!!
-function updateTimeLeftView (timeRemaining) {
-	
-}
-
-// Update currentTurnView with current player's name
-function updateCurrentTurnView (playerName) {
-
-}
-
-// Update nextTurnView with next player's name
-function updateNextCurrentTurnView (playerName) {
-
 }
