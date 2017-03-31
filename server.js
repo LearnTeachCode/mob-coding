@@ -34,6 +34,7 @@ http.listen(port, function() {
 
 var playerData = {};
 var playerList = [];
+var editorContent = '';
 var timerId;
 var nextTurnChangeTimestamp;
 var currentPlayerIndex;
@@ -50,6 +51,9 @@ io.on('connection', function(socket){
 
 	// Broadcast updated playerList to ALL clients
 	io.emit('playerListChange', playerData);
+
+	// Send current state of the text editor to the new client, to initialize!
+	socket.emit('editorChange', editorContent);
 
 	// When first user connects (if turn timer isn't already running):
 	if (!timerId) {
@@ -89,8 +93,6 @@ io.on('connection', function(socket){
 	console.log(playerData);
 	console.log(playerList);
 
-	// ------------------------- OTHER EVENTS ----------------------------------
-
 	// When a user disconnects,
 	socket.on('disconnect', function(){
 		
@@ -116,13 +118,16 @@ io.on('connection', function(socket){
 		console.log(playerList);
 	});
 
-	// When "editorChange" event received, broadcast it back out
+	// When "editorChange" event received, update editor state and broadcast it back out
 	socket.on('editorChange', function(data) {
 		
 		console.log('editorChange event received!');
 		console.log(data);
 
-		socket.broadcast.emit('editorChange', data);
+		// Update saved state of the shared text editor
+		editorContent = data;
+
+		socket.broadcast.emit('editorChange', editorContent);
 	});
 
 	// When "userNameChange" event received, broadcast it back out
@@ -141,19 +146,12 @@ io.on('connection', function(socket){
 		console.log(playerData);
 	});
 
-	// TO DO:
-		// implement 'turnChange' event with timer!
-		// track: current turn and next turn!
-		// send event to ALL clients at the right time
-
 });	// End of SocketIO part of the code
-
 
 
 /* -------------------------------------------------
 	FUNCTIONS
 ---------------------------------------------------- */
-
 function changeTurn(socketId) {
 	// If current client is first player, initialize!	  		
 	if (currentPlayerIndex == null) {
