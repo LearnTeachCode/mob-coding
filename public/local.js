@@ -3,6 +3,11 @@ var socket = io();
 	// Note that the SocketIO client-side library and this file (local.js)
 	// were both imported in index.html right before the </body> tag
 
+
+// SAVING LOCAL STATE -- GLOBAL VARS (ugh) 
+var currentPlayerId;
+var nextPlayerId;
+
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
     - editor       	 	<textarea> collab code editor
@@ -52,7 +57,6 @@ socket.on('connect', function(){
 	myNameInputView.value = 'Anonymous-' + socket.id.slice(0,4);
 });
 
-
 // Send editorInputView data to server
 function handleUserTyping (event) {
 	console.log('handleUserTyping event! value: ');
@@ -61,11 +65,19 @@ function handleUserTyping (event) {
 	socket.emit('editorChange', editorInputView.value);
 }
 
-// Send myNameInputView data to server
+// Send user's new name to server and update UI
 function handleUserNameChange (event) {
 	console.log('handleUserNameChange event! value: ');
 	console.log('%c ' + myNameInputView.value, 'color: green; font-weight: bold;');
 	
+	// Update UI if user is the current or next player
+	if (currentPlayerId === socket.id) {
+		updateCurrentTurnView(myNameInputView.value);	
+	} else if (nextPlayerId === socket.id) {
+		updateNextTurnView(myNameInputView.value);	
+	}
+
+	// Send user's new name to server
 	socket.emit('userNameChange', myNameInputView.value);	
 }
 
@@ -88,14 +100,14 @@ function handleEditorChange (data) {
 }
 
 // When receiving new player list data from server
-function handlePlayerListChange (playerList) {
+function handlePlayerListChange (playerData) {
 	console.log('%c playerListChange event received!', 'color: blue; font-weight: bold;');
-	console.dir(playerList);
+	console.dir(playerData);
 
 	// Transform the data!!
 
 	// Transform into an array to more easily reorder it
-	var playerIdArray = Object.keys(playerList);
+	var playerIdArray = Object.keys(playerData);
 
 	var userIndex = playerIdArray.indexOf(socket.id);
 	var playerListTopSegment = playerIdArray.slice(userIndex+1);
@@ -107,37 +119,45 @@ function handlePlayerListChange (playerList) {
 
 	// Generate an array of just usernames for updating the UI
 	var playerNameArray = playerIdArray.map(function(id){
-		return playerList[id];
+		return playerData[id];
 	});
 	console.log('playerNameArray:');
 	console.log(playerNameArray);
 
+	// Get names of current and next players based on saved local IDs
+	var currentPlayerName = playerData[currentPlayerId];
+	var nextPlayerName = playerData[nextPlayerId];
+
 	// Update the UI
 	updatePlayerListView(playerNameArray);
+	updateCurrentTurnView(currentPlayerName);
+	updateNextTurnView(nextPlayerName);
 }
 
 // When receiving new myNameInputView data from server
 function handleTurnChange (turnData) {
 	console.log('%c turnChange event received!', 'color: blue; font-weight: bold;');
-	console.dir(turnData);
-	console.log(turnData.millisRemaining);
+	console.dir(turnData);	
 
 	// Several things will happen when the turn changes!
 
 	// If user is current player,
 	// need to prevent user from typing in the editor!
 
-	// Update UI:
+	// Update local state
+	currentPlayerId = turnData.current.id;
+	nextPlayerId = turnData.next.id;
+
+	console.log('Updated local state. Current ID: ' + currentPlayerId + ', next ID: ' + nextPlayerId);
+
+	// Update UI
 	updateTimeLeftView(turnData.millisRemaining);
 	updateCurrentTurnView(turnData.current.name);
-	updateNextCurrentTurnView(turnData.next.name);
+	updateNextTurnView(turnData.next.name);
 	
 	//toggleYourTurnView();
 
 }
-
-// MAYBE: handle clock sync events from server???
-
 
 /* -------------------------------------------------
 	FUNCTIONS TO UPDATE VIEWS	
@@ -187,15 +207,13 @@ function updateTimeLeftView (timerDurationMillis) {
 
 	// Animate countdown timer
 	function step(timestamp) {
-		if (!start) start = timestamp;
-		console.log('start: ' + start);
-		console.log('timestamp: ' + timestamp);
+		if (!start) start = timestamp;		
 
 		var millisElapsed = (timestamp - start);
 		var millisRemaining = timerDurationMillis - millisElapsed;
 		
-		console.log('millisElapsed: ' + millisElapsed);
-		console.log('********* TIMER UPDATE: ' + millisRemaining);
+		//console.log('millisElapsed: ' + millisElapsed);
+		//console.log('********* TIMER UPDATE: ' + millisRemaining);
 
 		var secondsRemaining = Math.floor(millisRemaining / 1000);
 		var minutes = Math.floor(secondsRemaining / 60);
@@ -213,10 +231,12 @@ function updateTimeLeftView (timerDurationMillis) {
 
 // Update currentTurnView with current player's name
 function updateCurrentTurnView (playerName) {
+	console.log('Called updateCurrentTurnView with: ' + playerName);
 	currentTurnView.textContent = playerName;
 }
 
 // Update nextTurnView with next player's name
-function updateNextCurrentTurnView (playerName) {
+function updateNextTurnView (playerName) {
+	console.log('Called updateNextTurnView with: ' + playerName);
 	nextTurnView.textContent = playerName;
 }
