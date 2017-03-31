@@ -80,15 +80,11 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 **Milestones:**
 
-- Version 1 (branch `v1-turnbased-simple`): Turn-based system now mostly works!
+- Finished and cleaned up version 0 (`branch v0-shared-editor`), collaborative real-time text-editing (no turn-based system).
+
+- Version 1 (branch `v1-turnbased-simple`) with turn-based system now mostly works!
 
 **Next steps:**
-
-- Housekeeping: make new branch for turn-based version and remove commits from branch for non-turn-based version 0.
-
-- Housekeeping: remove unused UI elements from non-turn-based version 0 branch.
-
-- Small fix: when new clients connect, send them the curent state of the collaborative text editor!
 
 - Small fix: when client receives name change event, update "current turn" and "next turn" views also!
 
