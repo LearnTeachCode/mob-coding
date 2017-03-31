@@ -86,8 +86,6 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 **Next steps:**
 
-- When current or next player disconnects, broadcast current turn data to clients again
-
 - Next important step: prevent users from typing in the text box when it's not their turn!
 
 **Questions:**
