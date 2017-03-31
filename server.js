@@ -118,10 +118,19 @@ io.on('connection', function(socket){
 		console.log('editorChange event received!');
 		console.log(data);
 
-		// Update saved state of the shared text editor
-		editorContent = data;
+		// Double check that this user is allowed to type (in case of client-side tampering with the JS!)
+		if (socket.id === playerList[currentPlayerIndex]) {			
+			// Update saved state of the shared text editor
+			editorContent = data;
 
-		socket.broadcast.emit('editorChange', editorContent);
+			// Broadcast updated editor content to other clients
+			socket.broadcast.emit('editorChange', editorContent);
+
+			console.log('Broadcasting editorContent to other clients!');
+		} else {			
+			console.log('Client tried to cheat!!! Socket ID: ' + socket.id);
+		}
+		
 	});
 
 	// When "userNameChange" event received, broadcast it back out

@@ -50,9 +50,6 @@ editorInputView.addEventListener('input', handleUserTyping);
 myNameInputView.addEventListener('input', handleUserNameChange);
 
 
-/* -------------------------------------------------
-	INITIALIZE APP (ON SOCKET CONNECTION)
----------------------------------------------------- */
 
 // When client connects to server, generate default name to match socket.id
 socket.on('connect', function(){	
@@ -66,13 +63,27 @@ socket.on('disconnect', function(){
 	timeLeftView.textContent = '....';
 });
 
+
+
 // Send editorInputView data to server
 function handleUserTyping (event) {
 	console.log('handleUserTyping event! value: ');
+	console.log(event);
 	console.log('%c ' + editorInputView.value, 'color: green; font-weight: bold;');
 	
-	socket.emit('editorChange', editorInputView.value);
+	// If user is the current player, they can broadcast
+	if (socket.id === currentPlayerId) {
+		console.log('Sending data to server!')
+		// Send data to server
+		socket.emit('editorChange', editorInputView.value);
+	}
 }
+
+// Function that prevents user from typing when it's not their turn
+function preventUserTyping (event) {
+	event.preventDefault();
+	//return false;
+};
 
 // Send user's new name to server and update UI
 function handleUserNameChange (event) {
@@ -148,16 +159,23 @@ function handleTurnChange (turnData) {
 	console.log('%c turnChange event received!', 'color: blue; font-weight: bold;');
 	console.dir(turnData);	
 
-	// Several things will happen when the turn changes!
-
-	// If user is current player,
-	// need to prevent user from typing in the editor!
-
 	// Update local state
 	currentPlayerId = turnData.current.id;
 	nextPlayerId = turnData.next.id;
 
 	console.log('Updated local state. Current ID: ' + currentPlayerId + ', next ID: ' + nextPlayerId);
+
+	// If user is no longer the current player, prevent them from typing/broadcasting!
+	if (socket.id !== currentPlayerId) {
+		console.log("User's turn is over. Setting event listeners accordingly.");
+		editorInputView.removeEventListener('input', handleUserTyping);
+		editorInputView.addEventListener('keydown', preventUserTyping);
+	// Otherwise if user's turn is now starting, enable typing/broadcasting!
+	} else {
+		console.log("User's turn is starting! Setting event listeners accordingly.");
+		editorInputView.removeEventListener('keydown', preventUserTyping);
+		editorInputView.addEventListener('input', handleUserTyping);
+	}
 
 	// Update UI
 	updateTimeLeftView(turnData.millisRemaining);
@@ -165,7 +183,6 @@ function handleTurnChange (turnData) {
 	updateNextTurnView(turnData.next.name);
 	
 	//toggleYourTurnView();
-
 }
 
 /* -------------------------------------------------

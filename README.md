@@ -82,14 +82,10 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 - Finished and cleaned up version 0 (`branch v0-shared-editor`), collaborative real-time text-editing (no turn-based system).
 
-- Version 1 (branch `v1-turnbased-simple`) with turn-based system now mostly works!
-
-**Next steps:**
-
-- Next important step: prevent users from typing in the text box when it's not their turn!
+- Version 1 (branch `v1-turnbased-simple`) with turn-based system now works!
 
 **Questions:**
 
 - When a user is temporarily disconnected and then reconnects, what's the best way to maintain their state in the game? (Currently they lose their place in the turn order, and their username is reset.)
 
-- How should I handle the turn order and UI updates when the current or next player disconnects?
+- How can I prevent the user from typing into the text box but still allow the user to use the keyboard to navigate/select/copy the text when it's not their turn?
