@@ -86,12 +86,12 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 **Next steps:**
 
-- Small fix: when client receives name change event, update "current turn" and "next turn" views also!
-
-- Small fix: if user disconnects, turn off the timer animation and stop it at 00:00 (or even better, notify the user of their connection status!)
+- When current or next player disconnects, broadcast current turn data to clients again
 
 - Next important step: prevent users from typing in the text box when it's not their turn!
 
 **Questions:**
 
 - When a user is temporarily disconnected and then reconnects, what's the best way to maintain their state in the game? (Currently they lose their place in the turn order, and their username is reset.)
+
+- How should I handle the turn order and UI updates when the current or next player disconnects?

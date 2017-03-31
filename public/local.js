@@ -7,6 +7,7 @@ var socket = io();
 // SAVING LOCAL STATE -- GLOBAL VARS (ugh) 
 var currentPlayerId;
 var nextPlayerId;
+var animationId;
 
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
@@ -52,9 +53,17 @@ myNameInputView.addEventListener('input', handleUserNameChange);
 /* -------------------------------------------------
 	INITIALIZE APP (ON SOCKET CONNECTION)
 ---------------------------------------------------- */
-socket.on('connect', function(){
-	// Update user's default name to match socket.id
+
+// When client connects to server, generate default name to match socket.id
+socket.on('connect', function(){	
 	myNameInputView.value = 'Anonymous-' + socket.id.slice(0,4);
+});
+
+// When client disconnects, stop the timer!
+socket.on('disconnect', function(){	
+	console.log('* * * * * * * *  DISCONNECTED FROM SERVER  * * * * * * * *');
+	window.cancelAnimationFrame(animationId);	
+	timeLeftView.textContent = '....';
 });
 
 // Send editorInputView data to server
@@ -223,10 +232,10 @@ function updateTimeLeftView (timerDurationMillis) {
 		timeLeftView.textContent = ((minutes.toString().length > 1) ? minutes.toString() : '0' + minutes.toString()) + ':' + ((seconds.toString().length > 1) ? seconds.toString() : '0' + seconds.toString());
 
 		if (millisElapsed < timerDurationMillis) {
-			window.requestAnimationFrame(step);
+			animationId = window.requestAnimationFrame(step);
 		}
 	}
-	window.requestAnimationFrame(step);
+	animationId = window.requestAnimationFrame(step);
 }
 
 // Update currentTurnView with current player's name
