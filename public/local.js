@@ -295,9 +295,10 @@ function updateCurrentTurnView (playerName) {
 
 	// If user is the current player, highlight their name
 	if (socket.id === currentPlayerId) {
-		currentTurnView.classList.add('highlight');
+		currentTurnView.classList.add('highlightme');
+		currentTurnView.textContent = "It's your turn!";
 	} else {
-		currentTurnView.classList.remove('highlight');
+		currentTurnView.classList.remove('highlightme');
 	}
 }
 
@@ -308,8 +309,9 @@ function updateNextTurnView (playerName) {
 
 	// If user is the next player, highlight their name
 	if (socket.id === nextPlayerId) {
-		nextTurnView.classList.add('highlight');
+		nextTurnView.classList.add('highlightme');
+		nextTurnView.textContent = "You're up next!";
 	} else {
-		nextTurnView.classList.remove('highlight');
+		nextTurnView.classList.remove('highlightme');
 	}
 }

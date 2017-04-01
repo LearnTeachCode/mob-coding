@@ -116,6 +116,11 @@ body.myturn textarea{
   font-weight: bold;  
 }
 
+.highlightme {
+  color: red;
+  font-weight: bold;  
+}
+
 /* -------------------------------------------------
         MOBILE LAYOUT (temporary fix)
  --------------------------------------------------- */
