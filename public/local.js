@@ -174,25 +174,30 @@ function handleTurnChange (turnData) {
 	} else {
 		console.log("User's turn is starting! Setting event listeners accordingly.");
 		editorInputView.removeEventListener('keydown', preventUserTyping);
-		editorInputView.addEventListener('input', handleUserTyping);
-
-		// Update UI to highlight when it's the user's turn
-		toggleYourTurnView();
+		editorInputView.addEventListener('input', handleUserTyping);		
 	}
 
 	// Update UI
 	updateTimeLeftView(turnData.millisRemaining);
 	updateCurrentTurnView(turnData.current.name);
 	updateNextTurnView(turnData.next.name);	
+	toggleMyTurnViewHighlight();
 }
 
 /* -------------------------------------------------
 	FUNCTIONS TO UPDATE VIEWS	
 ---------------------------------------------------- */
 
-// Do something to notify user when it's their turn
-function toggleYourTurnView () {
-	document.body.classList.toggle('myturn');
+// UI highlights to notify user when it's their turn
+function toggleMyTurnViewHighlight () {	
+
+	// If user is the next player, highlight text box
+	if (socket.id === currentPlayerId) {
+		document.body.classList.add('myturn');
+	} else {
+		document.body.classList.remove('myturn');
+	}
+
 }
 
 // Using data from server, update list of players
@@ -258,10 +263,24 @@ function updateTimeLeftView (timerDurationMillis) {
 function updateCurrentTurnView (playerName) {
 	console.log('Called updateCurrentTurnView with: ' + playerName);
 	currentTurnView.textContent = playerName;
+
+	// If user is the current player, highlight their name
+	if (socket.id === currentPlayerId) {
+		currentTurnView.classList.add('highlight');
+	} else {
+		currentTurnView.classList.remove('highlight');
+	}
 }
 
 // Update nextTurnView with next player's name
 function updateNextTurnView (playerName) {
 	console.log('Called updateNextTurnView with: ' + playerName);
 	nextTurnView.textContent = playerName;
+
+	// If user is the next player, highlight their name
+	if (socket.id === nextPlayerId) {
+		nextTurnView.classList.add('highlight');
+	} else {
+		nextTurnView.classList.remove('highlight');
+	}
 }

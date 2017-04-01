@@ -111,7 +111,7 @@ body.myturn textarea{
   border:1px solid #91bd09;
 }
 
-.highlight, body.myturn #currentturn {
+.highlight {
   color: #75a939;
   font-weight: bold;  
 }
