@@ -104,6 +104,17 @@ input {
   padding: 0;
 }
 
+body.myturn textarea{
+  box-shadow: 0 0 20px #91bd09;
+  -webkit-box-shadow: 0 0 20px #91bd09; 
+  -moz-box-shadow: 0 0 20px #91bd09;
+  border:1px solid #91bd09;
+}
+
+.highlight, body.myturn #currentturn {
+  color: #75a939;
+  font-weight: bold;  
+}
 
 /* -------------------------------------------------
         MOBILE LAYOUT (temporary fix)

@@ -175,14 +175,15 @@ function handleTurnChange (turnData) {
 		console.log("User's turn is starting! Setting event listeners accordingly.");
 		editorInputView.removeEventListener('keydown', preventUserTyping);
 		editorInputView.addEventListener('input', handleUserTyping);
+
+		// Update UI to highlight when it's the user's turn
+		toggleYourTurnView();
 	}
 
 	// Update UI
 	updateTimeLeftView(turnData.millisRemaining);
 	updateCurrentTurnView(turnData.current.name);
-	updateNextTurnView(turnData.next.name);
-	
-	//toggleYourTurnView();
+	updateNextTurnView(turnData.next.name);	
 }
 
 /* -------------------------------------------------
@@ -191,9 +192,7 @@ function handleTurnChange (turnData) {
 
 // Do something to notify user when it's their turn
 function toggleYourTurnView () {
-	// maybe just toggle a CSS class on the <body>?
-	// or send a notification somehow? an alert() ?
-	// or play a sound?
+	document.body.classList.toggle('myturn');
 }
 
 // Using data from server, update list of players
