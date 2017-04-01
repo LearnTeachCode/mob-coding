@@ -51,9 +51,12 @@ myNameInputView.addEventListener('input', handleUserNameChange);
 
 
 
-// When client connects to server, generate default name to match socket.id
+// When client connects to server,
 socket.on('connect', function(){	
+	// Generate default name to match socket.id
 	myNameInputView.value = 'Anonymous-' + socket.id.slice(0,4);
+	// Update ID of first <li> in playerListView for player name highlighting with togglePlayerHighlight()
+	myNameListItemView.id = socket.id;
 });
 
 // When client disconnects, stop the timer!
@@ -138,18 +141,18 @@ function handlePlayerListChange (playerData) {
 	playerIdArray = playerListTopSegment.concat(playerListBottomSegment);
 
 	// Generate an array of just usernames for updating the UI
-	var playerNameArray = playerIdArray.map(function(id){
-		return playerData[id];
+	var playerArray = playerIdArray.map(function(id){
+		return {id: id, name: playerData[id]};
 	});
-	console.log('playerNameArray:');
-	console.log(playerNameArray);
+	console.log('playerArray:');
+	console.log(playerArray);
 
 	// Get names of current and next players based on saved local IDs
 	var currentPlayerName = playerData[currentPlayerId];
 	var nextPlayerName = playerData[nextPlayerId];
 
 	// Update the UI
-	updatePlayerListView(playerNameArray);
+	updatePlayerListView(playerArray);
 	updateCurrentTurnView(currentPlayerName);
 	updateNextTurnView(nextPlayerName);
 }
@@ -159,11 +162,17 @@ function handleTurnChange (turnData) {
 	console.log('%c turnChange event received!', 'color: blue; font-weight: bold;');
 	console.dir(turnData);	
 
+	// Remove highlight from previous current player's name in playerListView
+	togglePlayerHighlight(false);
+
 	// Update local state
 	currentPlayerId = turnData.current.id;
 	nextPlayerId = turnData.next.id;
 
 	console.log('Updated local state. Current ID: ' + currentPlayerId + ', next ID: ' + nextPlayerId);
+
+	// Add highlight to the new current player's name in playerListView
+	togglePlayerHighlight(true);
 
 	// If user is no longer the current player, prevent them from typing/broadcasting!
 	if (socket.id !== currentPlayerId) {
@@ -181,7 +190,7 @@ function handleTurnChange (turnData) {
 	updateTimeLeftView(turnData.millisRemaining);
 	updateCurrentTurnView(turnData.current.name);
 	updateNextTurnView(turnData.next.name);	
-	toggleMyTurnViewHighlight();
+	toggleMyTurnHighlight();
 }
 
 /* -------------------------------------------------
@@ -189,7 +198,7 @@ function handleTurnChange (turnData) {
 ---------------------------------------------------- */
 
 // UI highlights to notify user when it's their turn
-function toggleMyTurnViewHighlight () {	
+function toggleMyTurnHighlight () {	
 
 	// If user is the next player, highlight text box
 	if (socket.id === currentPlayerId) {
@@ -200,8 +209,22 @@ function toggleMyTurnViewHighlight () {
 
 }
 
+// Highlight name of current player in playerListView
+function togglePlayerHighlight (toggleOn) {
+	// First check if element exists, for case where user is the only player
+	if (document.getElementById(currentPlayerId)) {
+		// Add highlight
+		if (toggleOn) {
+			document.getElementById(currentPlayerId).classList.add('highlight');
+		// Remove highlight
+		} else {
+			document.getElementById(currentPlayerId).classList.remove('highlight');
+		}	
+	}
+}
+
 // Using data from server, update list of players
-function updatePlayerListView (playerNameArray) {	
+function updatePlayerListView (playerArray) {	
 	// Delete the contents of playerListView each time
 	while (playerListView.firstChild) {
     	playerListView.removeChild(playerListView.firstChild);
@@ -211,11 +234,17 @@ function updatePlayerListView (playerNameArray) {
 	playerListView.appendChild(myNameListItemView);
 
 	// Append player names to playerListView
-	playerNameArray.forEach(function(playerName){
+	playerArray.forEach(function(player){
 		
 		// Create an <li> node with player's name
 		var playerElement = document.createElement('li');
-		playerElement.textContent = playerName;
+		playerElement.id = player.id;
+		playerElement.textContent = player.name;
+
+		// If this player is the current player, highlight their name
+		if (player.id === currentPlayerId) {
+			playerElement.classList.add('highlight');
+		}
 
 		// Append to playerListView <ol>
 		playerListView.appendChild(playerElement);

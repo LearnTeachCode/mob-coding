@@ -49,17 +49,17 @@ io.on('connection', function(socket){
 	playerData[socket.id] = 'Anonymous-' + socket.id.slice(0,4);
 	playerList.push(socket.id);
 
-	// Broadcast updated playerList to ALL clients
-	io.emit('playerListChange', playerData);
-
 	// Send current state of the text editor to the new client, to initialize!
 	socket.emit('editorChange', editorContent);
 
 	// Initialize the turn (and timer) with first connected user
 	timerId = startTurnTimer(timerId, turnDuration, socket.id);
 		
-	// Also broadcast current turn data to the one client who just connected
+	// Broadcast current turn data to the one client who just connected
 	socket.emit( 'turnChange', getTurnData() );
+
+	// Broadcast updated playerList to ALL clients
+	io.emit('playerListChange', playerData);
 
 	console.log('----------------- initial turnData broadcasted:');
 	console.log( getTurnData() );
