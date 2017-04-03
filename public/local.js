@@ -260,19 +260,15 @@ function updateEditorView (editorData) {
 // Update timeLeftView with the time remaining	
 function updateTimeLeftView (timerDurationMillis) {
 
-	console.log('updateTimeLeftView CALLED with: ' + timerDurationMillis)
+	console.log('updateTimeLeftView CALLED with: ' + timerDurationMillis);
 
-	var start = null;
+	var turnEndTimestamp = Date.now() + timerDurationMillis;
 
 	// Animate countdown timer
 	function step(timestamp) {
-		if (!start) start = timestamp;		
+		var millisRemaining = turnEndTimestamp - Date.now();
 
-		var millisElapsed = (timestamp - start);
-		var millisRemaining = timerDurationMillis - millisElapsed;
-		
-		//console.log('millisElapsed: ' + millisElapsed);
-		//console.log('********* TIMER UPDATE: ' + millisRemaining);
+		console.log('millisRemaining: ' + millisRemaining);
 
 		var secondsRemaining = Math.floor(millisRemaining / 1000);
 		var minutes = Math.floor(secondsRemaining / 60);
@@ -281,7 +277,7 @@ function updateTimeLeftView (timerDurationMillis) {
 		// Format mm:ss string, padded with zeroes if needed
 		timeLeftView.textContent = ((minutes.toString().length > 1) ? minutes.toString() : '0' + minutes.toString()) + ':' + ((seconds.toString().length > 1) ? seconds.toString() : '0' + seconds.toString());
 
-		if (millisElapsed < timerDurationMillis) {
+		if (millisRemaining > 100) {
 			animationId = window.requestAnimationFrame(step);
 		}
 	}

@@ -38,7 +38,7 @@ var editorContent = '';
 var timerId;
 var nextTurnChangeTimestamp;
 var currentPlayerIndex;
-const turnDuration = 10000;
+const turnDuration = 30000;
 
 // When a user connects over websocket,
 io.on('connection', function(socket){

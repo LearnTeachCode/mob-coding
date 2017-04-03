@@ -89,3 +89,10 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - When a user is temporarily disconnected and then reconnects, what's the best way to maintain their state in the game? (Currently they lose their place in the turn order, and their username is reset.)
 
 - How can I prevent the user from typing into the text box but still allow the user to use the keyboard to navigate/select/copy the text when it's not their turn?
+
+### 2017-04-03
+
+**Milestones:**
+
+
+**Questions:**
