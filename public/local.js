@@ -260,7 +260,7 @@ function updateTimeLeftView (timerDurationMillis) {
 	function step(timestamp) {
 		var millisRemaining = turnEndTimestamp - Date.now();
 
-		console.log('millisRemaining: ' + millisRemaining);
+		//console.log('millisRemaining: ' + millisRemaining);
 
 		var secondsRemaining = Math.floor(millisRemaining / 1000);
 		var minutes = Math.floor(secondsRemaining / 60);
