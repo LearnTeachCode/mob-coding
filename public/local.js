@@ -25,10 +25,19 @@ var nextTurnView = document.getElementById('nextturn');
 var playerListView = document.getElementById('playerlist');
 var myNameInputView = document.getElementById('myname');
 var myNameListItemView = document.getElementById('me');
+
+
+/* -------------------------------------------------
+	ACE EDITOR SETUP
+	https://ace.c9.io
+---------------------------------------------------- */
+var editor = ace.edit('editor');
+editor.getSession().setMode('ace/mode/javascript');
+
+
 /* ------------------------------------------------------------
 	EVENT LISTENERS	/ SEND DATA TO SERVER
-	// NOTE: Might need to add/remove event listeners
-	// dynamically? Not sure.
+
 	EVENT NAMES: 		CLIENT FUNCTIONS:
 	- connection 		Send: 		SocketIO built-in event	
 	- disconnect 		Send: 		SocketIO built-in event
@@ -38,10 +47,8 @@ var myNameListItemView = document.getElementById('me');
 	- playerListChange 	Receive: 	handlePlayerListChange						
 	- turnChange 		Receive: 	handleTurnChange
 -------------------------------------------------------------- */
-editorInputView.addEventListener('input', handleUserTyping);
 myNameInputView.addEventListener('input', handleUserNameChange);
-
-
+editor.getSession().on('change', handleUserTyping);
 
 // When client connects to server,
 socket.on('connect', function(){	
@@ -64,13 +71,14 @@ socket.on('disconnect', function(){
 function handleUserTyping (event) {
 	console.log('handleUserTyping event! value: ');
 	console.log(event);
-	console.log('%c ' + editorInputView.value, 'color: green; font-weight: bold;');
+
+	console.log('%c ' + editor.getValue(), 'color: green; font-weight: bold;');
 	
 	// If user is the current player, they can broadcast
 	if (socket.id === currentPlayerId) {
 		console.log('Sending data to server!')
 		// Send data to server
-		socket.emit('editorChange', editorInputView.value);
+		socket.emit( 'editorChange', editor.getValue() );
 	}
 }
 
@@ -169,13 +177,11 @@ function handleTurnChange (turnData) {
 	// If user is no longer the current player, prevent them from typing/broadcasting!
 	if (socket.id !== currentPlayerId) {
 		console.log("User's turn is over. Setting event listeners accordingly.");
-		editorInputView.removeEventListener('input', handleUserTyping);
-		editorInputView.addEventListener('keydown', preventUserTyping);
+		editor.setReadOnly(true);
 	// Otherwise if user's turn is now starting, enable typing/broadcasting!
 	} else {
 		console.log("User's turn is starting! Setting event listeners accordingly.");
-		editorInputView.removeEventListener('keydown', preventUserTyping);
-		editorInputView.addEventListener('input', handleUserTyping);		
+		editor.setReadOnly(false);
 	}
 
 	// Update UI
@@ -246,7 +252,8 @@ function updatePlayerListView (playerArray) {
 
 // Using data from server, update text in code editor
 function updateEditorView (editorData) {
-	editorInputView.value = editorData;
+	editor.setValue(editorData);
+	editor.selection.clearSelection();
 }
 
 // Update timeLeftView with the time remaining	
