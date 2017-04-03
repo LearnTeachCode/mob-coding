@@ -17,50 +17,93 @@ http.listen(port, function() {
 
 /* ------------------------------------------------------------
 	EVENT NAMES: 		SERVER FUNCTIONS:
-
 	- connection 		Broadcast: playerListChange
-						***updatePlayerListView
-
+						***updatePlayerList
 	- disconnect 		Broadcast: playerListChange
-						***updatePlayerListView
-
+						***updatePlayerList
 	- userNameChange	Broadcast: playerListChange
-						*** updatePlayerListView
-
-	- editorChange		Broadcast: editorChange
+						*** updatePlayerList
+	- editorChange		Broadcast: editorChange				
+	- turnChange 		Broadcast: turnChange
 -------------------------------------------------------------- */
 
-var playerList = {};
+var playerData = {};
+var playerList = [];
 var editorContent = '';
+var timerId;
+var nextTurnChangeTimestamp;
+var currentPlayerIndex;
+const turnDuration = 30000;
 
 // When a user connects over websocket,
 io.on('connection', function(socket){
-
-	// Display this message in the server console
+	
 	console.log('A user connected!');	
 	
 	// Add user ID/name to playerList as soon as they connect
-	playerList[socket.id] = 'Anonymous-' + socket.id.slice(0,4);
-
-	// Broadcast updated playerList to ALL clients
-	io.emit('playerListChange', playerList);
-	
-	console.log(playerList);
+	playerData[socket.id] = 'Anonymous-' + socket.id.slice(0,4);
+	playerList.push(socket.id);
 
 	// Send current state of the text editor to the new client, to initialize!
 	socket.emit('editorChange', editorContent);
+
+	// Initialize the turn (and timer) with first connected user
+	timerId = startTurnTimer(timerId, turnDuration, socket.id);
+		
+	// Broadcast current turn data to the one client who just connected
+	socket.emit( 'turnChange', getTurnData() );
+
+	// Broadcast updated playerList to ALL clients
+	io.emit('playerListChange', playerData);
+
+	console.log('----------------- initial turnData broadcasted:');
+	console.log( getTurnData() );
+
+	console.log(' ! ! !   ! ! !   player data and list   ! ! !    ! ! !');
+	console.log(playerData);
+	console.log(playerList);
 
 	// When a user disconnects,
 	socket.on('disconnect', function(){
 		
 		console.log('A user disconnected!');		
 
+		// Temporarily save ID of current player
+		var currentPlayerId = playerList[currentPlayerIndex];
+
 		// Remove from playerList
-		delete playerList[socket.id];
+		delete playerData[socket.id];
+		playerList.splice( playerList.indexOf(socket.id), 1);
 
 		// Broadcast updated playerList
-		socket.broadcast.emit('playerListChange', playerList);
+		socket.broadcast.emit('playerListChange', playerData);
 
+		// If no players are left, reset the game!
+		if (playerList.length === 0) {
+			console.log('No players left. Turning off the turn timer!');
+			currentPlayerIndex = null;
+			
+			// Turn off the timer
+			clearInterval(timerId);
+			timerId = null;
+			nextTurnChangeTimestamp = null;
+		
+		// Otherwise, if the disconnected user was the current player, restart timer and change the turn!
+		} else if (socket.id === currentPlayerId) {
+			console.log('~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ CURRENT PLAYER disconnected! Restarting turn/timer.');
+			// Turn off the timer
+			clearInterval(timerId);
+			timerId = null;
+			nextTurnChangeTimestamp = null;
+
+			// Re-initialize the turn (and timer), passing control to the next user
+			timerId = startTurnTimer(timerId, turnDuration, socket.id);			
+		}		
+
+		// Broadcast current turn data to update all other clients
+		socket.broadcast.emit( 'turnChange', getTurnData() );
+
+		console.log(playerData);
 		console.log(playerList);
 	});
 
@@ -70,10 +113,19 @@ io.on('connection', function(socket){
 		console.log('editorChange event received!');
 		console.log(data);
 
-		// Update saved state of the shared text editor
-		editorContent = data;
+		// Double check that this user is allowed to type (in case of client-side tampering with the JS!)
+		if (socket.id === playerList[currentPlayerIndex]) {			
+			// Update saved state of the shared text editor
+			editorContent = data;
 
-		socket.broadcast.emit('editorChange', editorContent);
+			// Broadcast updated editor content to other clients
+			socket.broadcast.emit('editorChange', editorContent);
+
+			console.log('Broadcasting editorContent to other clients!');
+		} else {			
+			console.log('Client tried to cheat!!! Socket ID: ' + socket.id);
+		}
+		
 	});
 
 	// When "userNameChange" event received, broadcast it back out
@@ -83,13 +135,76 @@ io.on('connection', function(socket){
 		console.log(data);		
 
 		// Update name property of this client in playerList
-		playerList[socket.id] = data;
+		playerData[socket.id] = data;
 
 		// Broadcast updated playerList
-		socket.broadcast.emit('playerListChange', playerList);
+		socket.broadcast.emit('playerListChange', playerData);
 
-		console.log('updated playerList: ');
-		console.log(playerList);
+		console.log('updated playerData: ');
+		console.log(playerData);
 	});
 
 });	// End of SocketIO part of the code
+
+
+/* -------------------------------------------------
+	FUNCTIONS
+---------------------------------------------------- */
+function changeTurn(socketId) {
+	// If current client is first player, initialize!	  		
+	if (currentPlayerIndex == null) {
+		console.log('*************** INITIALIZING FIRST PLAYER **************');
+		currentPlayerIndex = playerList.indexOf(socketId);
+		console.log('currentPlayerIndex: ' + currentPlayerIndex);
+	// Otherwise, increment the current player
+	} else {	  			
+		console.log('+ + + Incrementing currentPlayerIndex + + +');
+		currentPlayerIndex = (currentPlayerIndex + 1) % playerList.length;
+		console.log('NEW currentPlayerIndex: ' + currentPlayerIndex);
+	}
+}
+
+// Returns turnChange object for the current turn
+function getTurnData() {
+	var currentPlayerId = playerList[currentPlayerIndex];
+	var currentPlayerName = playerData[currentPlayerId];
+	
+	var nextPlayerIndex = (currentPlayerIndex + 1) % playerList.length;
+	
+	var nextPlayerId = playerList[nextPlayerIndex];
+	var nextPlayerName = playerData[nextPlayerId];
+
+	return {millisRemaining: nextTurnChangeTimestamp - Date.now(), current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}};
+}
+
+// Initializes the turn and turn timer, returns timerId
+function startTurnTimer(timerId, turnDuration, socketId) {
+	// If turn timer isn't already running
+	if (!timerId) {
+		console.log('Initializing turn timer!');
+
+		// Initialize time of next turn change (will use this to sync the clients)
+		nextTurnChangeTimestamp = Date.now() + turnDuration;
+
+		console.log( new Date(nextTurnChangeTimestamp).toString() )
+
+		// Initialize the turn data using given user ID
+		changeTurn(socketId);		
+
+		// Every time the timer goes off, change turn again and broadcast the data
+		timerId = setInterval(() => {	  			  		
+	  		console.log('Time to change turns!');
+
+	  		// Update time of next turn change
+	  		nextTurnChangeTimestamp = Date.now() + turnDuration;
+
+			changeTurn(socketId);
+
+			// Broadcast turnChange with data to ALL clients
+			io.emit( 'turnChange', getTurnData() );
+
+			console.log( getTurnData() );
+		}, turnDuration); // TO DO: enable user-specified turn length
+	}
+	return timerId;
+}
