@@ -122,8 +122,6 @@ io.on('connection', function(socket){
 			socket.broadcast.emit('editorChange', editorContent);
 
 			console.log('Broadcasting editorContent to other clients!');
-		} else {			
-			console.log('Client tried to cheat!!! Socket ID: ' + socket.id);
 		}
 		
 	});

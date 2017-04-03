@@ -94,5 +94,8 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 **Milestones:**
 
+- New feature: added [Ace (an open source embeddable code editor)](https://ace.c9.io) to replace the plain text box, and it works great!
 
 **Questions:**
+
+- What's the best way to sync the state of the Ace code editors across users? Should I pass around the session object like in [this StackOverflow answer](http://stackoverflow.com/a/20404474), or handle selection change, cursor change, and similar events individually?
