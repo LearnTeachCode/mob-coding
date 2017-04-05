@@ -43,6 +43,7 @@ editor.getSession().setMode('ace/mode/javascript');
 	EVENT NAMES: 		CLIENT FUNCTIONS:
 	- connection 		Send: 		SocketIO built-in event	
 	- disconnect 		Send: 		SocketIO built-in event
+	- loggedIn			Send: 		handleUserLogin
 	- editorChange		Send: 		handleUserTyping
 						Receive: 	handleEditorChange
 	- userNameChange	Send: 		handleUserNameChange

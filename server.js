@@ -16,16 +16,16 @@ http.listen(port, function() {
 
 
 /* ------------------------------------------------------------
-	EVENT NAMES: 		SERVER FUNCTIONS:
-	- connection 		Broadcast: playerListChange
-						***updatePlayerList
+	EVENT NAMES: 		SERVER FUNCTIONS:			
+	- loggedIn			io.emit: playerListChange
+						socket.emit: editorChange, changeScroll, changeCursor, turnChange
+
 	- disconnect 		Broadcast: playerListChange
-						***updatePlayerList
 	- userNameChange	Broadcast: playerListChange
-						*** updatePlayerList
+
 	- editorChange		Broadcast: editorChange
 	- changeCursor		Broadcast: changeCursor
-	- changeScroll		Broadcast: changeScroll			
+	- changeScroll		Broadcast: changeScroll
 	- turnChange 		Broadcast: turnChange
 -------------------------------------------------------------- */
 
@@ -44,36 +44,39 @@ const turnDuration = 30000;
 // When a user connects over websocket,
 io.on('connection', function(socket){
 	
-	console.log('A user connected!');	
+	console.log('A user connected! (But not yet logged in.)');	
 	
-	// Add user ID/name to playerList as soon as they connect
-	playerData[socket.id] = 'Anonymous-' + socket.id.slice(0,4);
-	playerList.push(socket.id);
+	// When a user logs in,
+	socket.on('loggedIn', function(){
+		// Add user ID/name to playerList
+		playerData[socket.id] = 'Anonymous-' + socket.id.slice(0,4);
+		playerList.push(socket.id);
 
-	// Send current state of the text editor to the new client, to initialize!
-	socket.emit('editorChange', editorContent);
-	if (editorScroll != null) {
-		socket.emit('changeScroll', editorScroll);
-	}
-	if (editorCursorAndSelection != null) {
-		socket.emit('changeCursor', editorCursorAndSelection);
-	}
+		// Send current state of the text editor to the new client, to initialize!
+		socket.emit('editorChange', editorContent);
+		if (editorScroll != null) {
+			socket.emit('changeScroll', editorScroll);
+		}
+		if (editorCursorAndSelection != null) {
+			socket.emit('changeCursor', editorCursorAndSelection);
+		}
 
-	// Initialize the turn (and timer) with first connected user
-	timerId = startTurnTimer(timerId, turnDuration, socket.id);
-		
-	// Broadcast current turn data to the one client who just connected
-	socket.emit( 'turnChange', getTurnData() );
+		// Initialize the turn (and timer) with first connected user
+		timerId = startTurnTimer(timerId, turnDuration, socket.id);
+			
+		// Broadcast current turn data to the one client who just connected
+		socket.emit( 'turnChange', getTurnData() );
 
-	// Broadcast updated playerList to ALL clients
-	io.emit('playerListChange', playerData);
+		// Broadcast updated playerList to ALL clients
+		io.emit('playerListChange', playerData);
 
-	console.log('----------------- initial turnData broadcasted:');
-	console.log( getTurnData() );
+		console.log('----------------- initial turnData broadcasted:');
+		console.log( getTurnData() );
 
-	console.log(' ! ! !   ! ! !   player data and list   ! ! !    ! ! !');
-	console.log(playerData);
-	console.log(playerList);
+		console.log(' ! ! !   ! ! !   player data and list   ! ! !    ! ! !');
+		console.log(playerData);
+		console.log(playerList);
+	});	
 
 	// When a user disconnects,
 	socket.on('disconnect', function(){

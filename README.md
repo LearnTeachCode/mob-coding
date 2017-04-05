@@ -123,3 +123,4 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 - Finished the [GitHub login for static websites tutorial](https://github.com/hoodiehq/camp/issues/106) that I had started last week and now I think I finally understand promises, the point of environment variables, and the basics of GitHub authentication and API requests in general!
 
+- Started new branch (`github-auth`) to require users to log in via GitHub before starting the game
