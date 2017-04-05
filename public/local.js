@@ -32,6 +32,7 @@ var myNameListItemView = document.getElementById('me');
 	https://ace.c9.io
 ---------------------------------------------------- */
 var editor = ace.edit('editor');
+var Range = ace.require('ace/range').Range;
 editor.setTheme("ace/theme/monokai");
 editor.getSession().setMode('ace/mode/javascript');
 
@@ -47,9 +48,16 @@ editor.getSession().setMode('ace/mode/javascript');
 	- userNameChange	Send: 		handleUserNameChange
 	- playerListChange 	Receive: 	handlePlayerListChange						
 	- turnChange 		Receive: 	handleTurnChange
+	- changeCursor		Send: 		handleChangeCursor
+						Receive: 	handleNewCursorData
+	- changeScroll 		Send: 		handleChangeScroll
+						Receive: 	handleNewScrollData
 -------------------------------------------------------------- */
 myNameInputView.addEventListener('input', handleUserNameChange);
 editor.getSession().on('change', handleUserTyping);
+editor.getSession().selection.on('changeCursor', handleChangeCursor);
+editor.getSession().on('changeScrollLeft', handleChangeScroll);
+editor.getSession().on('changeScrollTop', handleChangeScroll);
 
 // When client connects to server,
 socket.on('connect', function(){	
@@ -65,7 +73,6 @@ socket.on('disconnect', function(){
 	window.cancelAnimationFrame(animationId);	
 	timeLeftView.textContent = '....';
 });
-
 
 
 // Send editorInputView data to server
@@ -105,6 +112,30 @@ function handleUserNameChange (event) {
 	socket.emit('userNameChange', myNameInputView.value);	
 }
 
+// Send cursor and selection data to server
+function handleChangeCursor (event) {
+	console.log('changeCursor fired!');
+	console.log('%c ' + event, 'color: green; font-weight: bold;');	
+
+	// Cursor object:
+	// {column, row}
+
+	// Selection Range object:
+	// { end: {column, row}, start: {column, row} }
+
+	// Send to server:
+	socket.emit( 'changeCursor', { cursor: editor.getSession().selection.getCursor(), range: editor.getSession().selection.getRange() } );
+}
+
+// Send scroll data to server
+function handleChangeScroll (event) {
+	console.log('changeScroll (left or top) fired!');
+	console.log('%c scrollLeft: ' + editor.getSession().getScrollLeft() + ', scrollTop: ' + editor.getSession().getScrollTop(), 'color: green; font-weight: bold;');
+
+	// Send to server:
+	socket.emit('changeScroll', { scrollLeft: editor.getSession().getScrollLeft(), scrollTop: editor.getSession().getScrollTop() });	
+}
+
 // TODO: Test 'input' event some more in different browsers!
 	// maybe add support for IE < 9 later?
 
@@ -112,6 +143,8 @@ function handleUserNameChange (event) {
 	EVENT LISTENERS / RECEIVE DATA FROM SERVER	
 ---------------------------------------------------- */
 socket.on('editorChange', handleEditorChange);
+socket.on('changeCursor', handleNewCursorData);
+socket.on('changeScroll', handleNewScrollData);
 socket.on('playerListChange', handlePlayerListChange);
 socket.on('turnChange', handleTurnChange);
 
@@ -121,6 +154,26 @@ function handleEditorChange (data) {
 	console.log('%c ' + data, 'color: blue; font-weight: bold;');
 
 	updateEditorView(data);
+}
+
+// When receiving new cursor/selection data from server
+function handleNewCursorData (data) {
+	console.log('%c cursorChange event received!', 'color: blue; font-weight: bold;');
+	console.dir(data);
+
+	// Set Ace editor's cursor and selection range to match
+	var updatedRange = new Range(data.range.start.row, data.range.start.column, data.range.end.row, data.range.end.column);
+	editor.getSession().selection.setSelectionRange( updatedRange );
+}
+
+// When receiving new scroll data from server
+function handleNewScrollData (data) {
+	console.log('%c scrollChange event received!', 'color: blue; font-weight: bold;');
+	console.dir(data); 
+
+	// Set Ace editor's scroll position to match
+	editor.getSession().setScrollLeft(data.scrollLeft);
+	editor.getSession().setScrollTop(data.scrollTop);
 }
 
 // When receiving new player list data from server

@@ -102,6 +102,6 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 ### 2017-04-04
 
-NEXT STEPS:
+**Milestones:**
 
-- Set up events to sync selection changes, cursor movements, and scroll position within Ace editor across clients!
+- Ace editor now syncs scroll, cursor, and selection changes between all clients!

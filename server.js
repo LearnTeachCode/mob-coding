@@ -23,13 +23,19 @@ http.listen(port, function() {
 						***updatePlayerList
 	- userNameChange	Broadcast: playerListChange
 						*** updatePlayerList
-	- editorChange		Broadcast: editorChange				
+	- editorChange		Broadcast: editorChange
+	- changeCursor		Broadcast: changeCursor
+	- changeScroll		Broadcast: changeScroll			
 	- turnChange 		Broadcast: turnChange
 -------------------------------------------------------------- */
 
 var playerData = {};
 var playerList = [];
-var editorContent = '';
+
+var editorContent = '// Type JavaScript here!';
+var editorCursorAndSelection;
+var editorScroll;
+
 var timerId;
 var nextTurnChangeTimestamp;
 var currentPlayerIndex;
@@ -46,6 +52,12 @@ io.on('connection', function(socket){
 
 	// Send current state of the text editor to the new client, to initialize!
 	socket.emit('editorChange', editorContent);
+	if (editorScroll != null) {
+		socket.emit('changeScroll', editorScroll);
+	}
+	if (editorCursorAndSelection != null) {
+		socket.emit('changeCursor', editorCursorAndSelection);
+	}
 
 	// Initialize the turn (and timer) with first connected user
 	timerId = startTurnTimer(timerId, turnDuration, socket.id);
@@ -122,6 +134,44 @@ io.on('connection', function(socket){
 			socket.broadcast.emit('editorChange', editorContent);
 
 			console.log('Broadcasting editorContent to other clients!');
+		}
+		
+	});
+
+	// When "changeCursor" event received, update editor state and broadcast it back out
+	socket.on('changeCursor', function(data) {
+		
+		console.log('changeCursor event received!');
+		console.log(data);
+
+		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
+		if (socket.id === playerList[currentPlayerIndex]) {			
+			// Update saved state of the shared text editor
+			editorCursorAndSelection = data;
+
+			// Broadcast data to other clients
+			socket.broadcast.emit('changeCursor', editorCursorAndSelection);
+
+			console.log('Broadcasting changeCursor to other clients!');
+		}
+		
+	});
+
+	// When "changeScroll" event received, update editor state and broadcast it back out
+	socket.on('changeScroll', function(data) {
+		
+		console.log('changeScroll event received!');
+		console.log(data);
+
+		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
+		if (socket.id === playerList[currentPlayerIndex]) {			
+			// Update saved state of the shared text editor
+			editorScroll = data;
+
+			// Broadcast data to other clients
+			socket.broadcast.emit('changeScroll', editorScroll);
+
+			console.log('Broadcasting changeScroll to other clients!');
 		}
 		
 	});
