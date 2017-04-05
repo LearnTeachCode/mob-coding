@@ -11,6 +11,8 @@ var animationId;
 
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
+	- loginmodal		container for login screen
+	- loginbutton		<button> to log in
     - editor       	 	<textarea> collab code editor
     - timeleft      	<p> shows minutes:seconds
     - currentturn   	name of current player
@@ -18,6 +20,8 @@ var animationId;
     - playerlist   		<ol> list of player names
     - myname       		<input> user's name
 ---------------------------------------------------- */
+var loginModalView = document.getElementById('loginmodal');
+var loginButtonView = document.getElementById('loginbutton');
 var editorInputView = document.getElementById('editor');
 var timeLeftView = document.getElementById('timeleft');
 var currentTurnView = document.getElementById('currentturn');
@@ -75,6 +79,19 @@ socket.on('disconnect', function(){
 	timeLeftView.textContent = '....';
 });
 
+// Authenticate user with GitHub API to log in
+function handleUserLogin () {
+
+	// When page reloads with GitHub code sent as a URL param,
+	// make the necessary API calls to get the auth_token
+	// and then get the authenticated user's GitHub data
+	// and update the user interface accordingly!
+
+	// updateLoggedInView(userData);
+
+	// Notify server that user logged in
+	// socket.emit('loggedIn', ....);
+}
 
 // Send editorInputView data to server
 function handleUserTyping (event) {
@@ -249,6 +266,17 @@ function handleTurnChange (turnData) {
 /* -------------------------------------------------
 	FUNCTIONS TO UPDATE VIEWS	
 ---------------------------------------------------- */
+
+// Update views for logged in user
+function updateLoggedInView (userData) {
+	// Hide loginModalView
+	loginModalView.style.display = 'none';
+	
+	// Set myNameInputView to use GitHub username
+	// myNameInputView.value = ....
+
+	// Display user's GitHub avatar image??
+}
 
 // UI highlights to notify user when it's their turn
 function toggleMyTurnHighlight () {	
