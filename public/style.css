@@ -83,8 +83,22 @@ input {
   padding: 3px;
 }
 
+#playerlist {
+  padding-left: 1.2em;
+}
+
 #playerlist li {
-    margin-bottom: 1em;
+    margin-bottom: 1em;        
+    border-bottom: 1px solid #ddd;
+    padding: 0 1em;
+    padding-bottom: 1em
+}
+
+.avatar {
+  width: 50px;
+  height: auto;
+  vertical-align: middle;
+  padding-right: 0.5em;
 }
 
 #currentturn, #nextturn {    
@@ -117,7 +131,8 @@ input {
 /* -------------------------------------------------
         LOGIN SCREEN
  --------------------------------------------------- */
-#loginmodal {
+#loginmodal {  
+  opacity: 1;
   position: fixed;
   z-index: 100;
   left: 0;
@@ -126,7 +141,9 @@ input {
   height: 100%;
   overflow: auto;
   background-color: rgb(255,255,255);
-  background-color: rgba(0,0,0,0.8);
+  background-color: rgba(0,0,0,0.8);  
+  -webkit-transition: opacity 0.5s linear;
+  transition: opacity 0.5s linear;
 }
 
 .modal-container {

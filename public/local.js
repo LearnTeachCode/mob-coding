@@ -9,6 +9,19 @@ var currentPlayerId;
 var nextPlayerId;
 var animationId;
 
+// If GitHub code is available as a parameter, authenticate and log in!
+if (getAllUrlParams().code) {
+	console.log('*********** AUTH PROCESS STARTED! **********');
+	console.log('code from URL params: ' + getAllUrlParams().code);
+	
+	// TODO: show loading animation while waiting???
+
+	getJSON("http://localhost:5000/767ca1fabdd2573f8b0c/" + getAllUrlParams().code)
+	.then(function (authData) {
+		return getJSON('https://api.github.com/user?access_token=' + authData.access_token);
+	}).then(handleUserLogin).catch(handleError);
+}
+
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
 	- loginmodal		container for login screen
@@ -79,18 +92,16 @@ socket.on('disconnect', function(){
 	timeLeftView.textContent = '....';
 });
 
-// Authenticate user with GitHub API to log in
-function handleUserLogin () {
+// Log in with authenticated user's GitHub data
+function handleUserLogin (userData) {
+	console.log('**************** Logged in! GitHub User Data: *********************');
+	console.log(userData);
 
-	// When page reloads with GitHub code sent as a URL param,
-	// make the necessary API calls to get the auth_token
-	// and then get the authenticated user's GitHub data
-	// and update the user interface accordingly!
-
-	// updateLoggedInView(userData);
+	// Update views with user's GitHub name and avatar
+	updateLoggedInView(userData.login, userData.avatar_url);
 
 	// Notify server that user logged in
-	// socket.emit('loggedIn', ....);
+	socket.emit('loggedIn', userData.login);
 }
 
 // Send editorInputView data to server
@@ -268,14 +279,20 @@ function handleTurnChange (turnData) {
 ---------------------------------------------------- */
 
 // Update views for logged in user
-function updateLoggedInView (userData) {
-	// Hide loginModalView
-	loginModalView.style.display = 'none';
+function updateLoggedInView (userName, userAvatar) {	
+	// Hide loginModalView	
+	loginModalView.style.opacity = '0';
 	
-	// Set myNameInputView to use GitHub username
-	// myNameInputView.value = ....
+	// TODO: maybe test setting display to none after a delay??	
 
-	// Display user's GitHub avatar image??
+	// Set myNameInputView to use GitHub username
+	myNameInputView.value = userName;
+
+	// Display user's GitHub avatar image
+	var userAvatarElem = document.createElement('img');
+  	userAvatarElem.src = userAvatar;
+  	userAvatarElem.classList.add('avatar');
+  	myNameListItemView.insertBefore(userAvatarElem, myNameInputView);
 }
 
 // UI highlights to notify user when it's their turn
@@ -317,10 +334,19 @@ function updatePlayerListView (playerArray) {
 	// Append player names to playerListView
 	playerArray.forEach(function(player){
 		
-		// Create an <li> node with player's name
+		// Create an <li> node with player's name and avatar
 		var playerElement = document.createElement('li');
 		playerElement.id = player.id;
 		playerElement.textContent = player.name;
+
+		// TODO: pass around user's avatar URL too!
+		/*
+		// Display user's GitHub avatar image
+		var userAvatarElem = document.createElement('img');
+	  	userAvatarElem.src = userAvatar;
+  		userAvatarElem.classList.add('avatar');
+  		document.getElementById(currentPlayerId).appendChild(userAvatarElem);
+		*/
 
 		// If this player is the current player, highlight their name
 		if (player.id === currentPlayerId) {
@@ -392,4 +418,103 @@ function updateNextTurnView (playerName) {
 	} else {
 		nextTurnView.classList.remove('highlightme');
 	}
+}
+
+
+/* -------------------------------------------------
+	HELPER FUNCTIONS
+---------------------------------------------------- */
+
+// Returns a promise, as a simple wrapper around XMLHTTPRequest
+// via http://eloquentjavascript.net/17_http.html
+function get(url) {
+  return new Promise(function(succeed, fail) {
+    var req = new XMLHttpRequest();
+    req.open("GET", url, true);
+    req.addEventListener("load", function() {
+      if (req.status < 400)
+        succeed(req.responseText);
+      else
+        fail(new Error("Request failed: " + req.statusText));
+    });
+    req.addEventListener("error", function() {
+      fail(new Error("Network error"));
+    });
+    req.send(null);
+  });
+}
+
+// Return object from parsed JSON data from a given URL
+// via http://eloquentjavascript.net/17_http.html
+function getJSON(url) {
+  return get(url).then(JSON.parse, handleError);
+}
+
+// Lazy error handling for now
+function handleError(error) {
+  console.log("Error: " + error);
+};
+
+// Returns an object containing URL parameters
+// via https://www.sitepoint.com/get-url-parameters-with-javascript/
+function getAllUrlParams(url) {
+
+  // get query string from url (optional) or window
+  var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
+
+  // we'll store the parameters here
+  var obj = {};
+
+  // if query string exists
+  if (queryString) {
+
+    // stuff after # is not part of query string, so get rid of it
+    queryString = queryString.split('#')[0];
+
+    // split our query string into its component parts
+    var arr = queryString.split('&');
+
+    for (var i=0; i<arr.length; i++) {
+      // separate the keys and the values
+      var a = arr[i].split('=');
+
+      // in case params look like: list[]=thing1&list[]=thing2
+      var paramNum = undefined;
+      var paramName = a[0].replace(/\[\d*\]/, function(v) {
+        paramNum = v.slice(1,-1);
+        return '';
+      });
+
+      // set parameter value (use 'true' if empty)
+      var paramValue = typeof(a[1])==='undefined' ? true : a[1];
+
+      // (optional) keep case consistent
+      paramName = paramName.toLowerCase();
+      paramValue = paramValue.toLowerCase();
+
+      // if parameter name already exists
+      if (obj[paramName]) {
+        // convert value to array (if still string)
+        if (typeof obj[paramName] === 'string') {
+          obj[paramName] = [obj[paramName]];
+        }
+        // if no array index number specified...
+        if (typeof paramNum === 'undefined') {
+          // put the value on the end of the array
+          obj[paramName].push(paramValue);
+        }
+        // if array index number specified...
+        else {
+          // put the value at that index number
+          obj[paramName][paramNum] = paramValue;
+        }
+      }
+      // if param name doesn't exist yet, set it
+      else {
+        obj[paramName] = paramValue;
+      }
+    }
+  }
+
+  return obj;
 }

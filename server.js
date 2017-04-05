@@ -42,14 +42,14 @@ var currentPlayerIndex;
 const turnDuration = 30000;
 
 // When a user connects over websocket,
-io.on('connection', function(socket){
+io.on('connection', function (socket) {
 	
 	console.log('A user connected! (But not yet logged in.)');	
 	
 	// When a user logs in,
-	socket.on('loggedIn', function(){
+	socket.on('loggedIn', function (userName) {
 		// Add user ID/name to playerList
-		playerData[socket.id] = 'Anonymous-' + socket.id.slice(0,4);
+		playerData[socket.id] = 'userName';
 		playerList.push(socket.id);
 
 		// Send current state of the text editor to the new client, to initialize!
@@ -79,7 +79,7 @@ io.on('connection', function(socket){
 	});	
 
 	// When a user disconnects,
-	socket.on('disconnect', function(){
+	socket.on('disconnect', function() {
 		
 		console.log('A user disconnected!');		
 
@@ -123,7 +123,7 @@ io.on('connection', function(socket){
 	});
 
 	// When "editorChange" event received, update editor state and broadcast it back out
-	socket.on('editorChange', function(data) {
+	socket.on('editorChange', function (data) {
 		
 		console.log('editorChange event received!');
 		console.log(data);
@@ -142,7 +142,7 @@ io.on('connection', function(socket){
 	});
 
 	// When "changeCursor" event received, update editor state and broadcast it back out
-	socket.on('changeCursor', function(data) {
+	socket.on('changeCursor', function (data) {
 		
 		console.log('changeCursor event received!');
 		console.log(data);
@@ -161,7 +161,7 @@ io.on('connection', function(socket){
 	});
 
 	// When "changeScroll" event received, update editor state and broadcast it back out
-	socket.on('changeScroll', function(data) {
+	socket.on('changeScroll', function (data) {
 		
 		console.log('changeScroll event received!');
 		console.log(data);
@@ -180,7 +180,7 @@ io.on('connection', function(socket){
 	});
 
 	// When "userNameChange" event received, broadcast it back out
-	socket.on('userNameChange', function(data) {
+	socket.on('userNameChange', function (data) {
 		
 		console.log('userNameChange event received!');
 		console.log(data);		
