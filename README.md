@@ -117,8 +117,9 @@ A mob programming web app for real-time collaboration at in-person events. The g
   - https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
   - http://www.levibotelho.com/development/commit-a-file-with-the-github-api
 
-  NEXT STEPS:
+### 2017-04-05
 
-  - Finish the [GitHub login for static websites tutorial](https://github.com/hoodiehq/camp/issues/106) that I had started last week
-  
-  - Outline user stories for the next features I want to implement (might wait until after tomorrow night's meetup to take feedback from user testing into account)
+**Milestones:**
+
+- Finished the [GitHub login for static websites tutorial](https://github.com/hoodiehq/camp/issues/106) that I had started last week and now I think I finally understand promises, the point of environment variables, and the basics of GitHub authentication and API requests in general!
+
