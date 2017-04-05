@@ -105,3 +105,20 @@ A mob programming web app for real-time collaboration at in-person events. The g
 **Milestones:**
 
 - Ace editor now syncs scroll, cursor, and selection changes between all clients!
+
+- Did some research on the GitHub API:
+  - https://developer.github.com/guides/getting-started/
+  - https://developer.github.com/v3/git/commits/#create-a-commit
+  - https://mdswanson.com/blog/2011/07/23/digging-around-the-github-api-take-2.html
+  - http://github-tools.github.io/github/
+  - https://git-scm.com/book/en/v1/Git-Internals
+  - Tangent: What a cool idea for Jekyll blogs! https://github.com/benbalter/jekyllbot
+  - http://www.nolim1t.co/2017/03/08/uploading-to-github-through-the-API.html
+  - https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
+  - http://www.levibotelho.com/development/commit-a-file-with-the-github-api
+
+  NEXT STEPS:
+
+  - Finish the [GitHub login for static websites tutorial](https://github.com/hoodiehq/camp/issues/106) that I had started last week
+  
+  - Outline user stories for the next features I want to implement (might wait until after tomorrow night's meetup to take feedback from user testing into account)
