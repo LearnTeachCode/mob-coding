@@ -99,3 +99,9 @@ A mob programming web app for real-time collaboration at in-person events. The g
 **Questions:**
 
 - What's the best way to sync the state of the Ace code editors across users? Should I pass around the session object like in [this StackOverflow answer](http://stackoverflow.com/a/20404474), or handle selection change, cursor change, and similar events individually?
+
+### 2017-04-04
+
+NEXT STEPS:
+
+- Set up events to sync selection changes, cursor movements, and scroll position within Ace editor across clients!

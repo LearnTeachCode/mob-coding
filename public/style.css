@@ -104,13 +104,6 @@ input {
   padding: 0;
 }
 
-body.myturn textarea{
-  box-shadow: 0 0 20px #91bd09;
-  -webkit-box-shadow: 0 0 20px #91bd09; 
-  -moz-box-shadow: 0 0 20px #91bd09;
-  border:1px solid #91bd09;
-}
-
 .highlight {
   color: #75a939;
   font-weight: bold;  
@@ -127,6 +120,13 @@ body.myturn textarea{
 #editor {
   height: 400px;
   font-size: 1.2em;
+}
+
+body.myturn #editor{
+  box-shadow: 0 0 40px #91bd09;
+  -webkit-box-shadow: 0 0 40px #91bd09; 
+  -moz-box-shadow: 0 0 40px #91bd09;
+  border:1px solid #91bd09;
 }
 
 /* -------------------------------------------------
