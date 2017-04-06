@@ -31,7 +31,7 @@ if (getAllUrlParams().code) {
     - currentturn   	name of current player
     - nextturn     		name of next player
     - playerlist   		<ol> list of player names
-    - myname       		<input> user's name
+    - myname       		<span> user's name
 ---------------------------------------------------- */
 var loginModalView = document.getElementById('loginmodal');
 var loginButtonView = document.getElementById('loginbutton');
@@ -40,7 +40,7 @@ var timeLeftView = document.getElementById('timeleft');
 var currentTurnView = document.getElementById('currentturn');
 var nextTurnView = document.getElementById('nextturn');
 var playerListView = document.getElementById('playerlist');
-var myNameInputView = document.getElementById('myname');
+var myNameView = document.getElementById('myname');
 var myNameListItemView = document.getElementById('me');
 
 
@@ -62,8 +62,7 @@ editor.getSession().setMode('ace/mode/javascript');
 	- disconnect 		Send: 		SocketIO built-in event
 	- loggedIn			Send: 		handleUserLogin
 	- editorChange		Send: 		handleUserTyping
-						Receive: 	handleEditorChange
-	- userNameChange	Send: 		handleUserNameChange
+						Receive: 	handleEditorChange	
 	- playerListChange 	Receive: 	handlePlayerListChange						
 	- turnChange 		Receive: 	handleTurnChange
 	- changeCursor		Send: 		handleChangeCursor
@@ -71,7 +70,6 @@ editor.getSession().setMode('ace/mode/javascript');
 	- changeScroll 		Send: 		handleChangeScroll
 						Receive: 	handleNewScrollData
 -------------------------------------------------------------- */
-myNameInputView.addEventListener('input', handleUserNameChange);
 editor.getSession().on('change', handleUserTyping);
 editor.getSession().selection.on('changeCursor', handleChangeCursor);
 editor.getSession().on('changeScrollLeft', handleChangeScroll);
@@ -80,7 +78,8 @@ editor.getSession().on('changeScrollTop', handleChangeScroll);
 // When client connects to server,
 socket.on('connect', function(){	
 	// Generate default name to match socket.id
-	myNameInputView.value = 'Anonymous-' + socket.id.slice(0,4);
+	//myNameView.textContent = 'Anonymous-' + socket.id.slice(0,4);
+	
 	// Update ID of first <li> in playerListView for player name highlighting with togglePlayerHighlight()
 	myNameListItemView.id = socket.id;
 });
@@ -128,17 +127,17 @@ function preventUserTyping (event) {
 // Send user's new name to server and update UI
 function handleUserNameChange (event) {
 	console.log('handleUserNameChange event! value: ');
-	console.log('%c ' + myNameInputView.value, 'color: green; font-weight: bold;');
+	console.log('%c ' + myNameView.textContent, 'color: green; font-weight: bold;');
 	
 	// Update UI if user is the current or next player
 	if (currentPlayerId === socket.id) {
-		updateCurrentTurnView(myNameInputView.value);	
+		updateCurrentTurnView(myNameView.textContent);	
 	} else if (nextPlayerId === socket.id) {
-		updateNextTurnView(myNameInputView.value);	
+		updateNextTurnView(myNameView.textContent);	
 	}
 
 	// Send user's new name to server
-	socket.emit('userNameChange', myNameInputView.value);	
+	socket.emit('userNameChange', myNameView.textContent);	
 }
 
 // Send cursor and selection data to server
@@ -240,7 +239,7 @@ function handlePlayerListChange (playerData) {
 	updateNextTurnView(nextPlayerName);
 }
 
-// When receiving new myNameInputView data from server
+// When receiving new myNameView data from server
 function handleTurnChange (turnData) {
 	console.log('%c turnChange event received!', 'color: blue; font-weight: bold;');
 	console.dir(turnData);	
@@ -285,14 +284,14 @@ function updateLoggedInView (userName, userAvatar) {
 	
 	// TODO: maybe test setting display to none after a delay??	
 
-	// Set myNameInputView to use GitHub username
-	myNameInputView.value = userName;
+	// Set myNameView to use GitHub username
+	myNameView.textContent = userName;
 
 	// Display user's GitHub avatar image
 	var userAvatarElem = document.createElement('img');
   	userAvatarElem.src = userAvatar;
   	userAvatarElem.classList.add('avatar');
-  	myNameListItemView.insertBefore(userAvatarElem, myNameInputView);
+  	myNameListItemView.insertBefore(userAvatarElem, myNameView);
 }
 
 // UI highlights to notify user when it's their turn

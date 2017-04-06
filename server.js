@@ -19,10 +19,7 @@ http.listen(port, function() {
 	EVENT NAMES: 		SERVER FUNCTIONS:			
 	- loggedIn			io.emit: playerListChange
 						socket.emit: editorChange, changeScroll, changeCursor, turnChange
-
 	- disconnect 		Broadcast: playerListChange
-	- userNameChange	Broadcast: playerListChange
-
 	- editorChange		Broadcast: editorChange
 	- changeCursor		Broadcast: changeCursor
 	- changeScroll		Broadcast: changeScroll
@@ -48,8 +45,11 @@ io.on('connection', function (socket) {
 	
 	// When a user logs in,
 	socket.on('loggedIn', function (userName) {
+		console.log('* * * * # # # #  User logged in!  # # # # * * * * *');
+		console.log('\t\t ' + userName)
+
 		// Add user ID/name to playerList
-		playerData[socket.id] = 'userName';
+		playerData[socket.id] = userName;
 		playerList.push(socket.id);
 
 		// Send current state of the text editor to the new client, to initialize!
@@ -177,22 +177,6 @@ io.on('connection', function (socket) {
 			console.log('Broadcasting changeScroll to other clients!');
 		}
 		
-	});
-
-	// When "userNameChange" event received, broadcast it back out
-	socket.on('userNameChange', function (data) {
-		
-		console.log('userNameChange event received!');
-		console.log(data);		
-
-		// Update name property of this client in playerList
-		playerData[socket.id] = data;
-
-		// Broadcast updated playerList
-		socket.broadcast.emit('playerListChange', playerData);
-
-		console.log('updated playerData: ');
-		console.log(playerData);
 	});
 
 });	// End of SocketIO part of the code
