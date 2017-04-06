@@ -334,30 +334,27 @@ function updatePlayerListView (playerArray) {
 	playerListView.appendChild(myNameListItemView);
 
 	// Append player names to playerListView
-	playerArray.forEach(function(player){
-		
+	playerArray.forEach(function(player){		
 		// Create an <li> node with player's name and avatar
 		var playerElement = document.createElement('li');
-		playerElement.id = player.id;
-		// playerElement.textContent = player.login;
+		playerElement.id = player.id;		
 
-		// TODO: pass around user's avatar URL too!
-		/*
 		// Display user's GitHub avatar image
 		var userAvatarElem = document.createElement('img');
 	  	userAvatarElem.src = player.avatar_url;
   		userAvatarElem.classList.add('avatar');
-  		document.getElementById(currentPlayerId).appendChild(userAvatarElem);
-		*/
 
 		// If this player is the current player, highlight their name
 		if (player.id === currentPlayerId) {
 			playerElement.classList.add('highlight');
 		}
 
-		// Append to playerListView <ol>
+		// Append player <li> to playerListView <ol>
 		playerListView.appendChild(playerElement);
 
+		// Append image and text node to player <li>
+  		playerElement.appendChild(userAvatarElem);
+  		playerElement.appendChild(document.createTextNode(player.login));
 	});
 }
 
