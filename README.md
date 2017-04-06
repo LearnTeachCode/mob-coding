@@ -14,7 +14,21 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 ## Project Goals
 
-**Goals for Version 1.0.0:**
+**Next Goals (for Version 2.0.0):**
+
+- (Done) Simple login system using GitHub authentication
+- (Done) Display players' GitHub usernames and profile photos
+- (Done) Use a nice code editor for features like line numbers, syntax highlighting, etc (Using [Ace](https://ace.c9.io) for this)
+- Save code from each session using GitHub API to make commits!
+- And then give credit to each contributor with a commit on every turn change
+- Run code within the app and display the output, similar to [repl.it](https://repl.it/) or [CodePen](http://codepen.io/) or [kodeWeave](https://github.com/mikethedj4/kodeWeave) or [Dabblet](https://github.com/LeaVerou/dabblet)
+- Add moderator controls (ideas include kick out players, pausing the game, choosing whose turn it is, changing the timer duration, etc)
+- (Maybe) Reintroduce anonymous user feature (just that they don't get credit for their commits, or they can only observe?)
+- Add support for multiple game rooms
+- Reintroduce non-turn-based collaborative text editor mode
+- (Crazy idea for later) Add support for multiplexed/tabbed invididual code editors that users or moderators can watch all at once, like a control room at a TV production studio! Maybe users can set permissions to make their "room" open to collaborators or just to viewers.
+
+**DONE: Goals for Version 1.0.0:**
 
 - Just a turn-based, collaborative plain text box!
 - Countdown timer displays the remaining time for each player and resets after each turn
@@ -23,7 +37,6 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - App displays who has the current turn and who has the next turn
 - App gets the user's attention somehow when it's their turn
 - Tools: NodeJS, Express, SocketIO, plain vanilla JavaScript and HTML/CSS
-
 
 ## Project Log
 
