@@ -68,8 +68,8 @@ io.on('connection', function (socket) {
 			timerId = startTurnTimer(timerId, turnDuration, socket.id);
 		}
 			
-		// Broadcast current turn data to the one client who just connected
-		socket.emit( 'turnChange', getTurnData() );
+		// Broadcast current turn data to all clients (for the case where nextPlayerId changes when a second user joins)
+		io.emit( 'turnChange', getTurnData() );
 
 		// Broadcast updated playerList to ALL clients
 		io.emit('playerListChange', playerData);
@@ -97,10 +97,7 @@ io.on('connection', function (socket) {
 
 			// Remove disconnected user from playerList
 			delete playerData[socket.id];
-			playerList.splice( playerList.indexOf(socket.id), 1);				
-
-			// Broadcast updated playerList
-			socket.broadcast.emit('playerListChange', playerData);
+			playerList.splice( playerList.indexOf(socket.id), 1);			
 
 			// If no logged-in players are left, reset the game!
 			if (playerList.length === 0) {
@@ -126,6 +123,9 @@ io.on('connection', function (socket) {
 
 			// Broadcast current turn data to update all other clients
 			socket.broadcast.emit( 'turnChange', getTurnData() );
+
+			// Broadcast updated playerList to update all other clients
+			socket.broadcast.emit('playerListChange', playerData);
 
 			console.log('playerData: ');
 			console.log(playerData);

@@ -233,6 +233,7 @@ function handlePlayerListChange (playerData) {
 	var currentPlayerName = playerData[currentPlayerId];
 	var nextPlayerName = playerData[nextPlayerId];
 
+	console.log('Updating UI with currentPlayerName: ' + currentPlayerName + ', nextPlayerName: ' + nextPlayerName);
 	// Update the UI
 	updatePlayerListView(playerArray);
 	updateCurrentTurnView(currentPlayerName);
