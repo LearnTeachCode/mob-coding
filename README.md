@@ -166,6 +166,10 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 - Switched to handling GitHub authentication with my own server and learned how to make a new route that makes a POST request from Node and redirects the user back to the homepage with their GitHub access token. Woohoo!
 
+- Set up production version with Heroku environment variables, no more hard-coded URLs or client ID (for now, just using an AJAX request to get the client ID from the server).
+
+- Did a second user test, this time virtually, with [this fun practice problem from r/DailyProgrammer](https://www.reddit.com/r/dailyprogrammer/comments/5e4mde/20161121_challenge_293_easy_defusing_the_bomb/)! Got some good feedback and identified some more bugs.
+
 **Questions:**
 
 - How should I go about generating an "unguessable string" for the `state` parameter for GitHub authentication?
@@ -173,3 +177,17 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - What's the simplest way to pass a variable from my server to my clients? Do I have to stop using that nifty Express static file server function? Do I need to use a templating system? Is it stupid to use AJAX to request it from the server? (For now, I'm just using an AJAX request.)
 
 - What's the simplest way to make a POST request from my NodeJS server? (**Answered:** Just use http.request method, woohoo!)
+
+**Next steps:** (based on user test feedback)
+
+- Make the code editor take up as much screen real estate as possible!
+
+- Add some way to choose a programming challenge and load in its instructions!
+
+- Display programming challenge instructions separately from the code, so players can read it more easily while others are typing.
+
+- Add some sort of notification system to alert players when it's their turn.
+
+- Fix bug where turn changes before the timer is up!
+
+- Find out why my app crashed or why it kicked out all the clients after a while. Try deploying via Cloud9 instead, see if that makes any difference, and check the logs.
