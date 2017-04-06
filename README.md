@@ -170,6 +170,6 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 - How should I go about generating an "unguessable string" for the `state` parameter for GitHub authentication?
 
-- What's the simplest way to pass a variable from my server to my clients? Do I have to stop using that nifty Express static file server function? Do I need to use a templating system? Is it stupid to use AJAX to request it from the server?
+- What's the simplest way to pass a variable from my server to my clients? Do I have to stop using that nifty Express static file server function? Do I need to use a templating system? Is it stupid to use AJAX to request it from the server? (For now, I'm just using an AJAX request.)
 
 - What's the simplest way to make a POST request from my NodeJS server? (**Answered:** Just use http.request method, woohoo!)
