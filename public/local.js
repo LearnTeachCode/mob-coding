@@ -9,22 +9,6 @@ var currentPlayerId;
 var nextPlayerId;
 var animationId;
 
-// ***************************************
-//	TEMPORARY!!! hard-coded client id:
-// ***************************************
-const CLIENT_ID = '767ca1fabdd2573f8b0c';
-
-// If GitHub access_token is available as a parameter, log in!
-if (getAllUrlParams().access_token) {
-	console.log('*********** AUTHENTICATED!!! **********');
-	console.log('access_token from URL params: ' + getAllUrlParams().access_token);
-	
-	// TODO: show loading animation while waiting???
-	
-	getJSON('https://api.github.com/user?access_token=' + getAllUrlParams().access_token)
-	.then(handleUserLogin).catch(handleError);
-}
-
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
 	- loginmodal		container for login screen
@@ -46,6 +30,39 @@ var playerListView = document.getElementById('playerlist');
 var myNameView = document.getElementById('myname');
 var myNameListItemView = document.getElementById('me');
 
+/* -------------------------------------------------
+	GITHUB AUTHENTICATION	
+---------------------------------------------------- */
+
+// If GitHub access_token is available as a parameter, log in!
+	// TODO: pass the token as a header instead? can client access it that way?
+if (getAllUrlParams().access_token) {
+	console.log('*********** AUTHENTICATED!!! **********');
+	console.log('access_token from URL params: ' + getAllUrlParams().access_token);
+	
+	// TODO: show loading animation while waiting???
+
+	// TODO: refactor getAllUrlParams(), don't need it, just need ONE param!
+	
+	getJSON('https://api.github.com/user?access_token=' + getAllUrlParams().access_token)
+	.then(handleUserLogin).catch(handleError);
+
+// Otherwise, if user has not yet started the login process,
+} else {
+	// Get the client ID environment variable from the server
+	get('/github-client')
+	.then(function(clientId){
+		console.log('>>>>>>>>>>>>>> Received response from /github-client route!:');
+		console.log(clientId);
+
+		// Render loginLinkView with the GitHub auth request URL
+		document.getElementById('loginlink').setAttribute('href', 'https://github.com/login/oauth/authorize?client_id=' + clientId + '&scope=user');		
+		document.getElementById('loginlink').style.display = 'block';
+		
+		// Hide "...loading..." placeholder
+		document.getElementById('loginloading').style.display = 'none';		
+	}, handleError).catch(handleError);
+}
 
 /* -------------------------------------------------
 	ACE EDITOR SETUP
