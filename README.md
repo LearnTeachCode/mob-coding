@@ -124,3 +124,23 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - Finished the [GitHub login for static websites tutorial](https://github.com/hoodiehq/camp/issues/106) that I had started last week and now I think I finally understand promises, the point of environment variables, and the basics of GitHub authentication and API requests in general!
 
 - Started new branch (`github-auth`) to require users to log in via GitHub before starting the game
+
+- Finished the user login and GitHub authentication features! Users now have to log in with GitHub before they can play, and the game displays their GitHub username and avatar.
+
+- Did my first live user test at my weekly web dev study group! Got some great feedback on the app and identified a couple bugs (which I think I already fixed in my dev branch).
+
+### 2017-04-06
+
+**Milestones:**
+
+- Finally started using the [Dotenv package](https://www.npmjs.com/package/dotenv) to manage local environment variables.
+
+- Switched to handling GitHub authentication with my own server and learned how to make a new route that makes a POST request from Node and redirects the user back to the homepage with their GitHub access token. Woohoo!
+
+**Questions:**
+
+- How should I go about generating an "unguessable string" for the `state` parameter for GitHub authentication?
+
+- What's the simplest way to pass a variable from my server to my clients? Do I have to stop using that nifty Express static file server function? Do I need to use a templating system? Is it stupid to use AJAX to request it from the server?
+
+- What's the simplest way to make a POST request from my NodeJS server? (**Answered:** Just use http.request method, woohoo!)
