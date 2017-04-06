@@ -94,13 +94,13 @@ socket.on('disconnect', function(){
 // Log in with authenticated user's GitHub data
 function handleUserLogin (userData) {
 	console.log('**************** Logged in! GitHub User Data: *********************');
-	console.log(userData);
+	console.log(userData);	
 
 	// Update views with user's GitHub name and avatar
 	updateLoggedInView(userData.login, userData.avatar_url);
 
 	// Notify server that user logged in
-	socket.emit('loggedIn', userData.login);
+	socket.emit('loggedIn', {login: userData.login, avatar_url: userData.avatar_url});
 }
 
 // Send editorInputView data to server
@@ -222,16 +222,16 @@ function handlePlayerListChange (playerData) {
 	// (but removed from this list), without modifying the turn order
 	playerIdArray = playerListTopSegment.concat(playerListBottomSegment);
 
-	// Generate an array of just usernames for updating the UI
+	// Generate an array of ids, user logins, and avatar_urls for updating the UI
 	var playerArray = playerIdArray.map(function(id){
-		return {id: id, name: playerData[id]};
+		return {id: id, login: playerData[id].login, avatar_url: playerData[id].avatar_url};
 	});
 	console.log('playerArray:');
 	console.log(playerArray);
 
 	// Get names of current and next players based on saved local IDs
-	var currentPlayerName = playerData[currentPlayerId];
-	var nextPlayerName = playerData[nextPlayerId];
+	var currentPlayerName = playerData[currentPlayerId].login;
+	var nextPlayerName = playerData[nextPlayerId].login;
 
 	console.log('Updating UI with currentPlayerName: ' + currentPlayerName + ', nextPlayerName: ' + nextPlayerName);
 	// Update the UI
@@ -339,13 +339,13 @@ function updatePlayerListView (playerArray) {
 		// Create an <li> node with player's name and avatar
 		var playerElement = document.createElement('li');
 		playerElement.id = player.id;
-		playerElement.textContent = player.name;
+		// playerElement.textContent = player.login;
 
 		// TODO: pass around user's avatar URL too!
 		/*
 		// Display user's GitHub avatar image
 		var userAvatarElem = document.createElement('img');
-	  	userAvatarElem.src = userAvatar;
+	  	userAvatarElem.src = player.avatar_url;
   		userAvatarElem.classList.add('avatar');
   		document.getElementById(currentPlayerId).appendChild(userAvatarElem);
 		*/

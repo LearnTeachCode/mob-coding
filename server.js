@@ -26,6 +26,9 @@ http.listen(port, function() {
 	- turnChange 		Broadcast: turnChange
 -------------------------------------------------------------- */
 
+// playerData:
+// { 'socket-id-here': {login: 'username-here', avatar_url: 'user-avatar-url-here'} }
+
 var playerData = {};
 var playerList = [];
 
@@ -45,13 +48,15 @@ io.on('connection', function (socket) {
 	console.log('\t\t playerList.length: ' + playerList.length);
 
 	// When a user logs in,
-	socket.on('loggedIn', function (userName) {
+	socket.on('loggedIn', function (userData) {
 		console.log('* * * * # # # #  User logged in!  # # # # * * * * *');
-		console.log('\t\t > > > ' + userName + ' < < <');
+		console.log('\t\t > > > ' + userData.login + ' < < <');
 		console.log('\t\t playerList.length: ' + playerList.length);
 
 		// Add user ID/name to playerList
-		playerData[socket.id] = userName;
+		playerData[socket.id] = {};
+		playerData[socket.id].login = userData.login;
+		playerData[socket.id].avatar_url = userData.avatar_url;
 		playerList.push(socket.id);
 
 		// Send current state of the text editor to the new client, to initialize!
@@ -217,12 +222,12 @@ function changeTurn(socketId) {
 // Returns turnChange object for the current turn
 function getTurnData() {
 	var currentPlayerId = playerList[currentPlayerIndex];
-	var currentPlayerName = playerData[currentPlayerId];
+	var currentPlayerName = playerData[currentPlayerId].login;
 	
 	var nextPlayerIndex = (currentPlayerIndex + 1) % playerList.length;
 	
 	var nextPlayerId = playerList[nextPlayerIndex];
-	var nextPlayerName = playerData[nextPlayerId];
+	var nextPlayerName = playerData[nextPlayerId].login;
 
 	return {millisRemaining: nextTurnChangeTimestamp - Date.now(), current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}};
 }
