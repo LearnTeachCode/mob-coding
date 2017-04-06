@@ -83,8 +83,22 @@ input {
   padding: 3px;
 }
 
+#playerlist {
+  padding-left: 1.2em;
+}
+
 #playerlist li {
-    margin-bottom: 1em;
+    margin-bottom: 1em;        
+    border-bottom: 1px solid #ddd;
+    padding: 0 1em;
+    padding-bottom: 1em
+}
+
+.avatar {
+  width: 50px;
+  height: auto;
+  vertical-align: middle;
+  padding-right: 0.5em;
 }
 
 #currentturn, #nextturn {    
@@ -115,6 +129,65 @@ input {
 }
 
 /* -------------------------------------------------
+        LOGIN SCREEN
+ --------------------------------------------------- */
+#loginmodal {  
+  opacity: 1;
+  position: fixed;
+  z-index: 100;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgb(255,255,255);
+  background-color: rgba(0,0,0,0.8);  
+  -webkit-transition: opacity 0.5s linear;
+  transition: opacity 0.5s linear;
+}
+
+.modal-container {
+  background-color: #fefefe;
+  max-width: 30em;
+  margin: 15% auto;
+  padding: 3em;
+  border: 1px solid #888;
+  border-radius: 1em;
+  text-align: center;
+}
+
+#loginmodal p {
+  text-align: left;
+  padding-left:1em;
+}
+
+#loginmodal h2 {
+  margin-bottom: 1.2em;
+}
+
+.octicon {
+  padding-right: 0.1em;
+  vertical-align: middle;
+  fill: #222;
+}
+
+#loginbutton {
+  margin-top: 0.5em;
+  background: #91bd09;
+  font-size: 1.5em;
+  color: #111;
+  padding: 0.6em 1em;
+  border-radius: 0.5em;
+  border: 1px solid #79a000;
+}
+
+#loginbutton:hover {
+  transition: 0.2s;
+  background: #a9da11;
+  border: 1px solid #93c103;
+}
+
+/* -------------------------------------------------
         ACE EDITOR
  --------------------------------------------------- */
 #editor {
@@ -126,7 +199,7 @@ body.myturn #editor{
   box-shadow: 0 0 40px #91bd09;
   -webkit-box-shadow: 0 0 40px #91bd09; 
   -moz-box-shadow: 0 0 40px #91bd09;
-  border:1px solid #91bd09;
+  border: 1px solid #91bd09;
 }
 
 /* -------------------------------------------------

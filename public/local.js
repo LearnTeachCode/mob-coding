@@ -9,21 +9,41 @@ var currentPlayerId;
 var nextPlayerId;
 var animationId;
 
+// ***************************************
+//	TEMPORARY!!! hard-coded client id:
+// ***************************************
+const CLIENT_ID = '767ca1fabdd2573f8b0c';
+
+// If GitHub access_token is available as a parameter, log in!
+if (getAllUrlParams().access_token) {
+	console.log('*********** AUTHENTICATED!!! **********');
+	console.log('access_token from URL params: ' + getAllUrlParams().access_token);
+	
+	// TODO: show loading animation while waiting???
+	
+	getJSON('https://api.github.com/user?access_token=' + getAllUrlParams().access_token)
+	.then(handleUserLogin).catch(handleError);
+}
+
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
+	- loginmodal		container for login screen
+	- loginbutton		<button> to log in
     - editor       	 	<textarea> collab code editor
     - timeleft      	<p> shows minutes:seconds
     - currentturn   	name of current player
     - nextturn     		name of next player
     - playerlist   		<ol> list of player names
-    - myname       		<input> user's name
+    - myname       		<span> user's name
 ---------------------------------------------------- */
+var loginModalView = document.getElementById('loginmodal');
+var loginButtonView = document.getElementById('loginbutton');
 var editorInputView = document.getElementById('editor');
 var timeLeftView = document.getElementById('timeleft');
 var currentTurnView = document.getElementById('currentturn');
 var nextTurnView = document.getElementById('nextturn');
 var playerListView = document.getElementById('playerlist');
-var myNameInputView = document.getElementById('myname');
+var myNameView = document.getElementById('myname');
 var myNameListItemView = document.getElementById('me');
 
 
@@ -43,9 +63,9 @@ editor.getSession().setMode('ace/mode/javascript');
 	EVENT NAMES: 		CLIENT FUNCTIONS:
 	- connection 		Send: 		SocketIO built-in event	
 	- disconnect 		Send: 		SocketIO built-in event
+	- loggedIn			Send: 		handleUserLogin
 	- editorChange		Send: 		handleUserTyping
-						Receive: 	handleEditorChange
-	- userNameChange	Send: 		handleUserNameChange
+						Receive: 	handleEditorChange	
 	- playerListChange 	Receive: 	handlePlayerListChange						
 	- turnChange 		Receive: 	handleTurnChange
 	- changeCursor		Send: 		handleChangeCursor
@@ -53,7 +73,6 @@ editor.getSession().setMode('ace/mode/javascript');
 	- changeScroll 		Send: 		handleChangeScroll
 						Receive: 	handleNewScrollData
 -------------------------------------------------------------- */
-myNameInputView.addEventListener('input', handleUserNameChange);
 editor.getSession().on('change', handleUserTyping);
 editor.getSession().selection.on('changeCursor', handleChangeCursor);
 editor.getSession().on('changeScrollLeft', handleChangeScroll);
@@ -62,7 +81,8 @@ editor.getSession().on('changeScrollTop', handleChangeScroll);
 // When client connects to server,
 socket.on('connect', function(){	
 	// Generate default name to match socket.id
-	myNameInputView.value = 'Anonymous-' + socket.id.slice(0,4);
+	//myNameView.textContent = 'Anonymous-' + socket.id.slice(0,4);
+	
 	// Update ID of first <li> in playerListView for player name highlighting with togglePlayerHighlight()
 	myNameListItemView.id = socket.id;
 });
@@ -74,6 +94,17 @@ socket.on('disconnect', function(){
 	timeLeftView.textContent = '....';
 });
 
+// Log in with authenticated user's GitHub data
+function handleUserLogin (userData) {
+	console.log('**************** Logged in! GitHub User Data: *********************');
+	console.log(userData);	
+
+	// Update views with user's GitHub name and avatar
+	updateLoggedInView(userData.login, userData.avatar_url);
+
+	// Notify server that user logged in
+	socket.emit('loggedIn', {login: userData.login, avatar_url: userData.avatar_url});
+}
 
 // Send editorInputView data to server
 function handleUserTyping (event) {
@@ -99,17 +130,17 @@ function preventUserTyping (event) {
 // Send user's new name to server and update UI
 function handleUserNameChange (event) {
 	console.log('handleUserNameChange event! value: ');
-	console.log('%c ' + myNameInputView.value, 'color: green; font-weight: bold;');
+	console.log('%c ' + myNameView.textContent, 'color: green; font-weight: bold;');
 	
 	// Update UI if user is the current or next player
 	if (currentPlayerId === socket.id) {
-		updateCurrentTurnView(myNameInputView.value);	
+		updateCurrentTurnView(myNameView.textContent);	
 	} else if (nextPlayerId === socket.id) {
-		updateNextTurnView(myNameInputView.value);	
+		updateNextTurnView(myNameView.textContent);	
 	}
 
 	// Send user's new name to server
-	socket.emit('userNameChange', myNameInputView.value);	
+	socket.emit('userNameChange', myNameView.textContent);	
 }
 
 // Send cursor and selection data to server
@@ -194,24 +225,25 @@ function handlePlayerListChange (playerData) {
 	// (but removed from this list), without modifying the turn order
 	playerIdArray = playerListTopSegment.concat(playerListBottomSegment);
 
-	// Generate an array of just usernames for updating the UI
+	// Generate an array of ids, user logins, and avatar_urls for updating the UI
 	var playerArray = playerIdArray.map(function(id){
-		return {id: id, name: playerData[id]};
+		return {id: id, login: playerData[id].login, avatar_url: playerData[id].avatar_url};
 	});
 	console.log('playerArray:');
 	console.log(playerArray);
 
 	// Get names of current and next players based on saved local IDs
-	var currentPlayerName = playerData[currentPlayerId];
-	var nextPlayerName = playerData[nextPlayerId];
+	var currentPlayerName = playerData[currentPlayerId].login;
+	var nextPlayerName = playerData[nextPlayerId].login;
 
+	console.log('Updating UI with currentPlayerName: ' + currentPlayerName + ', nextPlayerName: ' + nextPlayerName);
 	// Update the UI
 	updatePlayerListView(playerArray);
 	updateCurrentTurnView(currentPlayerName);
 	updateNextTurnView(nextPlayerName);
 }
 
-// When receiving new myNameInputView data from server
+// When receiving new myNameView data from server
 function handleTurnChange (turnData) {
 	console.log('%c turnChange event received!', 'color: blue; font-weight: bold;');
 	console.dir(turnData);	
@@ -248,6 +280,25 @@ function handleTurnChange (turnData) {
 /* -------------------------------------------------
 	FUNCTIONS TO UPDATE VIEWS	
 ---------------------------------------------------- */
+
+// Update views for logged in user
+function updateLoggedInView (userName, userAvatar) {	
+	// Hide loginModalView	
+	loginModalView.style.opacity = '0';
+	
+	window.setTimeout(function(){
+		loginModalView.style.display = 'none';
+	}, 900);
+
+	// Set myNameView to use GitHub username
+	myNameView.textContent = userName;
+
+	// Display user's GitHub avatar image
+	var userAvatarElem = document.createElement('img');
+  	userAvatarElem.src = userAvatar;
+  	userAvatarElem.classList.add('avatar');
+  	myNameListItemView.insertBefore(userAvatarElem, myNameView);
+}
 
 // UI highlights to notify user when it's their turn
 function toggleMyTurnHighlight () {	
@@ -286,21 +337,27 @@ function updatePlayerListView (playerArray) {
 	playerListView.appendChild(myNameListItemView);
 
 	// Append player names to playerListView
-	playerArray.forEach(function(player){
-		
-		// Create an <li> node with player's name
+	playerArray.forEach(function(player){		
+		// Create an <li> node with player's name and avatar
 		var playerElement = document.createElement('li');
-		playerElement.id = player.id;
-		playerElement.textContent = player.name;
+		playerElement.id = player.id;		
+
+		// Display user's GitHub avatar image
+		var userAvatarElem = document.createElement('img');
+	  	userAvatarElem.src = player.avatar_url;
+  		userAvatarElem.classList.add('avatar');
 
 		// If this player is the current player, highlight their name
 		if (player.id === currentPlayerId) {
 			playerElement.classList.add('highlight');
 		}
 
-		// Append to playerListView <ol>
+		// Append player <li> to playerListView <ol>
 		playerListView.appendChild(playerElement);
 
+		// Append image and text node to player <li>
+  		playerElement.appendChild(userAvatarElem);
+  		playerElement.appendChild(document.createTextNode(player.login));
 	});
 }
 
@@ -363,4 +420,103 @@ function updateNextTurnView (playerName) {
 	} else {
 		nextTurnView.classList.remove('highlightme');
 	}
+}
+
+
+/* -------------------------------------------------
+	HELPER FUNCTIONS
+---------------------------------------------------- */
+
+// Returns a promise, as a simple wrapper around XMLHTTPRequest
+// via http://eloquentjavascript.net/17_http.html
+function get(url) {
+  return new Promise(function(succeed, fail) {
+    var req = new XMLHttpRequest();
+    req.open("GET", url, true);
+    req.addEventListener("load", function() {
+      if (req.status < 400)
+        succeed(req.responseText);
+      else
+        fail(new Error("Request failed: " + req.statusText));
+    });
+    req.addEventListener("error", function() {
+      fail(new Error("Network error"));
+    });
+    req.send(null);
+  });
+}
+
+// Return object from parsed JSON data from a given URL
+// via http://eloquentjavascript.net/17_http.html
+function getJSON(url) {
+  return get(url).then(JSON.parse, handleError);
+}
+
+// Lazy error handling for now
+function handleError(error) {
+  console.log("Error: " + error);
+};
+
+// Returns an object containing URL parameters
+// via https://www.sitepoint.com/get-url-parameters-with-javascript/
+function getAllUrlParams(url) {
+
+  // get query string from url (optional) or window
+  var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
+
+  // we'll store the parameters here
+  var obj = {};
+
+  // if query string exists
+  if (queryString) {
+
+    // stuff after # is not part of query string, so get rid of it
+    queryString = queryString.split('#')[0];
+
+    // split our query string into its component parts
+    var arr = queryString.split('&');
+
+    for (var i=0; i<arr.length; i++) {
+      // separate the keys and the values
+      var a = arr[i].split('=');
+
+      // in case params look like: list[]=thing1&list[]=thing2
+      var paramNum = undefined;
+      var paramName = a[0].replace(/\[\d*\]/, function(v) {
+        paramNum = v.slice(1,-1);
+        return '';
+      });
+
+      // set parameter value (use 'true' if empty)
+      var paramValue = typeof(a[1])==='undefined' ? true : a[1];
+
+      // (optional) keep case consistent
+      paramName = paramName.toLowerCase();
+      paramValue = paramValue.toLowerCase();
+
+      // if parameter name already exists
+      if (obj[paramName]) {
+        // convert value to array (if still string)
+        if (typeof obj[paramName] === 'string') {
+          obj[paramName] = [obj[paramName]];
+        }
+        // if no array index number specified...
+        if (typeof paramNum === 'undefined') {
+          // put the value on the end of the array
+          obj[paramName].push(paramValue);
+        }
+        // if array index number specified...
+        else {
+          // put the value at that index number
+          obj[paramName][paramNum] = paramValue;
+        }
+      }
+      // if param name doesn't exist yet, set it
+      else {
+        obj[paramName] = paramValue;
+      }
+    }
+  }
+
+  return obj;
 }
