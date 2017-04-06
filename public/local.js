@@ -283,7 +283,9 @@ function updateLoggedInView (userName, userAvatar) {
 	// Hide loginModalView	
 	loginModalView.style.opacity = '0';
 	
-	// TODO: maybe test setting display to none after a delay??	
+	window.setTimeout(function(){
+		loginModalView.style.display = 'none';
+	}, 900);
 
 	// Set myNameView to use GitHub username
 	myNameView.textContent = userName;
