@@ -11,6 +11,13 @@ var port = process.env.PORT || 8000;	// Set the default port number to 8000, or 
 // Use Express to serve everything in the "public" folder as static files
 app.use(express.static('public'));
 
+// Pass GITHUB_CLIENT_ID to client when requested (using AJAX for now)
+	// TODO (later): mess around with templating engines and Express .render()?
+app.get('/github-client', function (req, res) {
+	console.log('Request recieved for /github-client route. Sending response: GITHUB_CLIENT_ID');
+	res.end(process.env.GITHUB_CLIENT_ID);
+});
+
 // Handle GitHub authentication at this route, then redirect to homepage
 app.get('/github-auth', authenticateUser);
 
