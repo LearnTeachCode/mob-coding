@@ -42,11 +42,13 @@ const turnDuration = 30000;
 io.on('connection', function (socket) {
 	
 	console.log('A user connected! (But not yet logged in.)');	
-	
+	console.log('\t\t playerList.length: ' + playerList.length);
+
 	// When a user logs in,
 	socket.on('loggedIn', function (userName) {
 		console.log('* * * * # # # #  User logged in!  # # # # * * * * *');
-		console.log('\t\t ' + userName)
+		console.log('\t\t > > > ' + userName + ' < < <');
+		console.log('\t\t playerList.length: ' + playerList.length);
 
 		// Add user ID/name to playerList
 		playerData[socket.id] = userName;
@@ -62,7 +64,9 @@ io.on('connection', function (socket) {
 		}
 
 		// Initialize the turn (and timer) with first connected user
-		timerId = startTurnTimer(timerId, turnDuration, socket.id);
+		if (timerId == null) {
+			timerId = startTurnTimer(timerId, turnDuration, socket.id);
+		}
 			
 		// Broadcast current turn data to the one client who just connected
 		socket.emit( 'turnChange', getTurnData() );
@@ -76,6 +80,7 @@ io.on('connection', function (socket) {
 		console.log(' ! ! !   ! ! !   player data and list   ! ! !    ! ! !');
 		console.log(playerData);
 		console.log(playerList);
+		console.log('\t\t playerList.length: ' + playerList.length);
 	});	
 
 	// When a user disconnects,
@@ -83,43 +88,53 @@ io.on('connection', function (socket) {
 		
 		console.log('A user disconnected!');		
 
-		// Temporarily save ID of current player
-		var currentPlayerId = playerList[currentPlayerIndex];
+		// If disconnected user was logged in,
+		if (playerList.indexOf(socket.id) !== -1) {
+			console.log('\t User removed from list of logged-in players. ID: ' + socket.id);
 
-		// Remove from playerList
-		delete playerData[socket.id];
-		playerList.splice( playerList.indexOf(socket.id), 1);
+			// Temporarily save ID of current player (before removing from playerList, for a later check!)
+			var currentPlayerId = playerList[currentPlayerIndex];
 
-		// Broadcast updated playerList
-		socket.broadcast.emit('playerListChange', playerData);
+			// Remove disconnected user from playerList
+			delete playerData[socket.id];
+			playerList.splice( playerList.indexOf(socket.id), 1);				
 
-		// If no players are left, reset the game!
-		if (playerList.length === 0) {
-			console.log('No players left. Turning off the turn timer!');
-			currentPlayerIndex = null;
+			// Broadcast updated playerList
+			socket.broadcast.emit('playerListChange', playerData);
+
+			// If no logged-in players are left, reset the game!
+			if (playerList.length === 0) {
+				console.log('No players left. Turning off the turn timer!');
+				currentPlayerIndex = null;
+				
+				// Turn off the timer
+				clearInterval(timerId);
+				timerId = null;
+				nextTurnChangeTimestamp = null;
 			
-			// Turn off the timer
-			clearInterval(timerId);
-			timerId = null;
-			nextTurnChangeTimestamp = null;
-		
-		// Otherwise, if the disconnected user was the current player, restart timer and change the turn!
-		} else if (socket.id === currentPlayerId) {
-			console.log('~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ CURRENT PLAYER disconnected! Restarting turn/timer.');
-			// Turn off the timer
-			clearInterval(timerId);
-			timerId = null;
-			nextTurnChangeTimestamp = null;
+			// Otherwise, if the disconnected user was the current player, restart timer and change the turn!
+			} else if (socket.id === currentPlayerId) {
+				console.log('~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ CURRENT PLAYER disconnected! Restarting turn/timer.');
+				// Turn off the timer
+				clearInterval(timerId);
+				timerId = null;
+				nextTurnChangeTimestamp = null;
 
-			// Re-initialize the turn (and timer), passing control to the next user
-			timerId = startTurnTimer(timerId, turnDuration, socket.id);			
+				// Re-initialize the turn (and timer), passing control to the next user
+				timerId = startTurnTimer(timerId, turnDuration, socket.id);			
+			}		
+
+			// Broadcast current turn data to update all other clients
+			socket.broadcast.emit( 'turnChange', getTurnData() );
+
+			console.log('playerData: ');
+			console.log(playerData);
+			console.log('playerList: ');
+			console.log(playerList);
+
+		} else {
+			console.log('\t User was not yet logged in, so no action taken.');
 		}		
-
-		// Broadcast current turn data to update all other clients
-		socket.broadcast.emit( 'turnChange', getTurnData() );
-
-		console.log(playerData);
-		console.log(playerList);
 	});
 
 	// When "editorChange" event received, update editor state and broadcast it back out
@@ -214,32 +229,30 @@ function getTurnData() {
 
 // Initializes the turn and turn timer, returns timerId
 function startTurnTimer(timerId, turnDuration, socketId) {
-	// If turn timer isn't already running
-	if (!timerId) {
-		console.log('Initializing turn timer!');
+	console.log('Initializing turn timer!');
 
-		// Initialize time of next turn change (will use this to sync the clients)
-		nextTurnChangeTimestamp = Date.now() + turnDuration;
+	// Initialize time of next turn change (will use this to sync the clients)
+	nextTurnChangeTimestamp = Date.now() + turnDuration;
 
-		console.log( new Date(nextTurnChangeTimestamp).toString() )
+	console.log( new Date(nextTurnChangeTimestamp).toString() )
 
-		// Initialize the turn data using given user ID
-		changeTurn(socketId);		
+	// Initialize the turn data using given user ID
+	changeTurn(socketId);		
 
-		// Every time the timer goes off, change turn again and broadcast the data
-		timerId = setInterval(() => {	  			  		
-	  		console.log('Time to change turns!');
+	// Every time the timer goes off, change turn again and broadcast the data
+	timerId = setInterval(() => {	  			  		
+  		console.log('Time to change turns!');
 
-	  		// Update time of next turn change
-	  		nextTurnChangeTimestamp = Date.now() + turnDuration;
+  		// Update time of next turn change
+  		nextTurnChangeTimestamp = Date.now() + turnDuration;
 
-			changeTurn(socketId);
+		changeTurn(socketId);
 
-			// Broadcast turnChange with data to ALL clients
-			io.emit( 'turnChange', getTurnData() );
+		// Broadcast turnChange with data to ALL clients
+		io.emit( 'turnChange', getTurnData() );
 
-			console.log( getTurnData() );
-		}, turnDuration); // TO DO: enable user-specified turn length
-	}
+		console.log( getTurnData() );
+	}, turnDuration); // TO DO: enable user-specified turn length
+
 	return timerId;
 }
