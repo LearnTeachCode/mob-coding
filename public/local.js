@@ -9,17 +9,20 @@ var currentPlayerId;
 var nextPlayerId;
 var animationId;
 
-// If GitHub code is available as a parameter, authenticate and log in!
-if (getAllUrlParams().code) {
-	console.log('*********** AUTH PROCESS STARTED! **********');
-	console.log('code from URL params: ' + getAllUrlParams().code);
+// ***************************************
+//	TEMPORARY!!! hard-coded client id:
+// ***************************************
+const CLIENT_ID = '767ca1fabdd2573f8b0c';
+
+// If GitHub access_token is available as a parameter, log in!
+if (getAllUrlParams().access_token) {
+	console.log('*********** AUTHENTICATED!!! **********');
+	console.log('access_token from URL params: ' + getAllUrlParams().access_token);
 	
 	// TODO: show loading animation while waiting???
-
-	getJSON("http://localhost:5000/767ca1fabdd2573f8b0c/" + getAllUrlParams().code)
-	.then(function (authData) {
-		return getJSON('https://api.github.com/user?access_token=' + authData.access_token);
-	}).then(handleUserLogin).catch(handleError);
+	
+	getJSON('https://api.github.com/user?access_token=' + getAllUrlParams().access_token)
+	.then(handleUserLogin).catch(handleError);
 }
 
 /* -------------------------------------------------

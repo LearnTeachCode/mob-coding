@@ -1,19 +1,61 @@
 // Setting up libraries and configuration
+require('dotenv').config();				// Loads variables from .env file into process.env
 var express = require('express');		// The require() function includes the code for Express
 var app = express();					// Initialize the Express library
-var http = require('http').Server(app);	// Initialize an HTTP server
-var io = require('socket.io')(http);	// Include and initialize SocketIO
+var http = require('http');				// Get access to Node's http methods!
+var https = require('https');			// ... and https methods!
+var server = http.Server(app);			// Initialize an Express HTTP server
+var io = require('socket.io')(server);	// Include and initialize SocketIO
 var port = process.env.PORT || 8000;	// Set the default port number to 8000, or use Heroku's settings (process.env.PORT)
 
 // Use Express to serve everything in the "public" folder as static files
 app.use(express.static('public'));
 
+// Handle GitHub authentication at this route, then redirect to homepage
+app.get('/github-auth', authenticateUser);
+
+function authenticateUser (req, res) {
+
+	// TO DO: use "state" param and verify it for extra security!
+
+	// Make a POST request to https://github.com/login/oauth/access_token	
+	var githubResponseBody = '';
+	var postRequestBody = 'client_id=' + process.env.GITHUB_CLIENT_ID + '&client_secret=' + process.env.GITHUB_CLIENT_SECRET + '&code=' + req.query.code;
+
+	var request = https.request({
+	  hostname: 'github.com', 
+	  path: '/login/oauth/access_token',
+	  port: '443',
+	  method: 'POST',
+	  headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(postRequestBody),
+          'Accept': 'application/json'
+      }	 
+	}, function(response) {
+	  response.on('data', function(chunk) {
+	    githubResponseBody += chunk;	    
+	  });
+	  response.on('end', function() {	    
+	    console.log('\n*****done receiving response data:\n' + githubResponseBody + '\n');	    
+
+		// TODO (later): check the scopes, because users can authorize less than what my app requested!
+
+		// Redirect to home page again but now with the access token!
+		res.redirect('/?access_token=' + JSON.parse(githubResponseBody).access_token);		
+	  });
+	});
+
+	request.write(postRequestBody);
+	request.end();
+
+}
+
 // Activate the server and listen on our specified port number
-http.listen(port, function() {
+server.listen(port, function() {
 	// Display this message in the server console once the server is active
 	console.log('Listening on port ' + port);
 });
-
 
 /* ------------------------------------------------------------
 	EVENT NAMES: 		SERVER FUNCTIONS:			
@@ -91,7 +133,8 @@ io.on('connection', function (socket) {
 	// When a user disconnects,
 	socket.on('disconnect', function() {
 		
-		console.log('A user disconnected!');		
+		console.log('A user disconnected!');	
+		console.log('currentPlayerIndex: ' + currentPlayerIndex);
 
 		// If disconnected user was logged in,
 		if (playerList.indexOf(socket.id) !== -1) {
@@ -114,24 +157,27 @@ io.on('connection', function (socket) {
 				timerId = null;
 				nextTurnChangeTimestamp = null;
 			
-			// Otherwise, if the disconnected user was the current player, restart timer and change the turn!
-			} else if (socket.id === currentPlayerId) {
-				console.log('~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ CURRENT PLAYER disconnected! Restarting turn/timer.');
-				// Turn off the timer
-				clearInterval(timerId);
-				timerId = null;
-				nextTurnChangeTimestamp = null;
+			// Otherwise, if there are players left,
+			} else {
+			 	// If the disconnected user was the current player, restart timer and change the turn!
+			 	if (socket.id === currentPlayerId) {
+					console.log('~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ CURRENT PLAYER disconnected! Restarting turn/timer.');
+					// Turn off the timer
+					clearInterval(timerId);
+					timerId = null;
+					nextTurnChangeTimestamp = null;
 
-				// Re-initialize the turn (and timer), passing control to the next user
-				timerId = startTurnTimer(timerId, turnDuration, socket.id);			
-			}		
+					// Re-initialize the turn (and timer), passing control to the next user
+					timerId = startTurnTimer(timerId, turnDuration, socket.id);			
+				}
 
-			// Broadcast current turn data to update all other clients
-			socket.broadcast.emit( 'turnChange', getTurnData() );
+				// Broadcast current turn data to update all other clients
+				socket.broadcast.emit( 'turnChange', getTurnData() );
 
-			// Broadcast updated playerList to update all other clients
-			socket.broadcast.emit('playerListChange', playerData);
-
+				// Broadcast updated playerList to update all other clients
+				socket.broadcast.emit('playerListChange', playerData);
+			}			 
+			
 			console.log('playerData: ');
 			console.log(playerData);
 			console.log('playerList: ');
