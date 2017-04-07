@@ -140,11 +140,10 @@ A mob programming web app for real-time collaboration at in-person events. The g
   - https://developer.github.com/v3/git/commits/#create-a-commit
   - https://mdswanson.com/blog/2011/07/23/digging-around-the-github-api-take-2.html
   - http://github-tools.github.io/github/
-  - https://git-scm.com/book/en/v1/Git-Internals
-  - Tangent: What a cool idea for Jekyll blogs! https://github.com/benbalter/jekyllbot
   - http://www.nolim1t.co/2017/03/08/uploading-to-github-through-the-API.html
   - https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
-  - http://www.levibotelho.com/development/commit-a-file-with-the-github-api
+  - http://www.levibotelho.com/development/commit-a-file-with-the-github-api  
+  - Tangent: What a cool idea for Jekyll blogs! https://github.com/benbalter/jekyllbot
 
 ### 2017-04-05
 
@@ -191,3 +190,89 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - Fix bug where turn changes before the timer is up!
 
 - Find out why my app crashed or why it kicked out all the clients after a while. Try deploying via Cloud9 instead, see if that makes any difference, and check the logs.
+
+### 2017-04-07
+
+**Milestones:**
+
+- Made my first commit using just the GitHub API (via command line testing it out with cURL)!
+
+- Researched GitHub's features and API more to identify how I could structure this app.
+
+**Next steps for today:**
+
+- My goals for today: 1) make a commit with the GitHub API, and 2) limit myself to work on this project for _only_ 3 hours today (I have lots of other stuff to do, so I can't keep using this as an excuse to procrastinate!)
+
+**Questions:**
+
+- What permissions do I need to make a commit?
+
+- At each step of the process, how do I know if it worked?!
+
+- What are the steps involved, again? I read about them the other night, but I didn't really learn how it all works
+
+- I know I've asked this before and I've learned about it before, but once again, what's a SHA?
+
+- What's a tree, again? (In the context of Git?)
+
+- What's a reference, or ref for short, in Git? ([Answer via Atlassian](https://www.atlassian.com/git/tutorials/refs-and-the-reflog): an indirect way to refer to a commit. For example, branch names, HEAD, etc.)
+
+- What's the best way to save collaborative version history from my mob coding app? A series of commits to a file in a single repo? (Permissions might be tricky or downright impossible here!) Forks of a starter repo with pull requests merged back into it? (Messy?)
+
+- What's the difference between POST and PATCH methods for accessing GitHub's API? Why did POST work for updating a reference, even though the API said to use the PATCH method? Does it matter
+?
+
+- How exactly to [GitHub integrations](https://developer.github.com/early-access/integrations/) work, and do I need one to make this app work the way I had envisioned it?
+
+**Notes on making commits with GitHub API:**
+
+- The [GitHub API documentation](https://developer.github.com/v3/git/commits/#create-a-commit) says you can indeed create a commit by sending a POST request to their API endpoint at `/repos/:owner/:repo/git/commits`. You need to provide 1) the commit message, 2) the SHA of the tree object that the commit points to, and 3) the SHAs of the commits that were the parents of this commit (or an array containing a single SHA). Optionally, I can include information about the author/comitter and the timestamp of the commit.
+
+- I just remembered: I should be able to test this all out using cURL! Yup, it worked nicely. I just created a repo! Woohoo!
+
+- So how do I get or create that tree object (and its SHA), and how do I get the SHAs of the commit's parent(s)?
+
+- Neat trick: [here's how Git calculates the SHA1 for a file](http://stackoverflow.com/questions/552659/how-to-assign-a-git-sha1s-to-a-file-without-git/552725#552725)! I also just learned that a "blob" is simply a file.
+
+- Whoa, apparently GitHub gists are actual repos that can be forked and cloned too! See [Forking and Cloning Gists in the GitHub docs](https://help.github.com/articles/forking-and-cloning-gists/).
+
+- So here's an interesting workflow, which may or may not be better than making commits to a repo: maybe in the mob coding session, on each user's turn, they're forking an initial Gist (which simply contains the instructions for the programming challenge) and making edits to it. Then we can see the final version history by looking at the "revisions" page of the fork that belongs to the last user. Ah, that's one big downside though: no permalink to a place to view the final version, because the URL to the final version would constantly be changing, and the previous versions wouldn't show all the history!
+
+- Had a fun tangent exploring creative uses of GitHub gists for code previews, text adventure games, minimal blog posts, and more. Something to think about for later!
+
+- OK, so back on track. I've at least determined that gists are not going to work well for what I want to do. But I'm still not sure what the best implementation is. More on that later, I guess. Back to learning about making commits with the GitHub API!
+
+- Found the [GitHub Trees API](https://developer.github.com/v3/git/trees/) and the [References API](https://developer.github.com/v3/git/refs/). There's also the [Blobs API](https://developer.github.com/v3/git/blobs/)!
+
+- Comparing the steps outlined in these blog posts: ["Making a commit with the GitHub API"](https://mdswanson.com/blog/2011/07/23/digging-around-the-github-api-take-2.html) by Matt Swanson, ["Uploading to GitHub Through the API"](http://www.nolim1t.co/2017/03/08/uploading-to-github-through-the-API.html) by "nomim1t", and ["Commit a file with the GitHub API"](http://www.levibotelho.com/development/commit-a-file-with-the-github-api) by Levi Botelho.
+
+- Looks like everyone agrees that the first step is to get a reference to the HEAD of the desired branch by making a GET request to `/repos/:user/:repo/git/refs/heads/:branch` and save the SHA (and URL?) of the commit that the HEAD points to, which is the latest commit. Testing it out now... It works!
+
+- The blog posts I found differ on the order here, but the next step is either to get the SHA of the tree of the last commit or create a blob. But Matt Swanson says in his blog post that he skipped manually creating the blog, "since setting tree.content automatically builds one for you". Maybe I'll try it that way!
+
+- OK, so my step two is this: make a GET request to object.url (which I received from the request I made for step 1), and then from _that_ request, save the tree.sha value.
+
+- For step three, I tried following Matt Swanson's trick, but no luck! Then I realized that blog post is from 2011, while the others are from 2014 and 2017. SO maybe the API changed. Oh well.
+
+- Trying a different step three: create a blob (a new file) by making a POST request to `/repos/:user/:repo/git/blobs` with a payload like this: `'{"content": "# Hello World", "encoding": "utf-8"}` and save the SHA returned by the response.
+
+- Step four: create a new tree by creating another POST request to `/repos/:user/:repo/git/trees/` with the following payload: `'{"base_tree": "' + [tree.SHA from step two's response] + '", "tree": [{"path": "test.md", "mode": "100644", "type": "blob", "sha": "' + [top-level SHA from step three's response] + '"}]"}'` and then from this next response, save the top-level SHA, which is the SHA of the newly-created tree!
+
+- Step five: finally make the commit with a POST request to `/repos/:user/:repo/git/commits` with the payload `'{"parents": ["' + [SHA of the commit from step two's response] + '"], "tree": "' + [SHA of the tree created in step four] + '", "message": "Testing remote commit via GitHub API"}'` and then save the SHA of the newly-created commit from the response!
+
+- Step six: move the HEAD ref to point to the new commit by making a PATCH request (or POST request?) to `/repos/:user/:repo/git/refs/:ref` where :ref is replaced with `heads/:branch` with the payload `'{"sha": "' + [SHA of the new commit from step five] + '"}'`
+
+- _Success!!!_ It worked! Wow, I feel so much more comfortable now with the GitHub API and with how Git commits actually work. So cool! Next I just need to translate these steps into JavaScript code that can run on my server. And work out the whole permissions issue.
+
+**Notes on permissions and workflow issues using GitHub API:**
+
+- The [Collaborators API](https://developer.github.com/v3/repos/collaborators/) does allow you to add users as collaborators for a repo, but only if the repo is owned by an organization. Hmm, that works fine for me! Using this method, they would be ["outside collaborators"](https://help.github.com/articles/adding-outside-collaborators-to-repositories-in-your-organization/). But I can also use the [Teams API](https://developer.github.com/v3/orgs/teams/) to create a new team, add members to it, and give the team permissions to make commits to a repo! I can even use the [Members API](https://developer.github.com/v3/orgs/members/) to add users to my organization. But the catch with all that is I can only do that from _my_ account.
+
+- I might need to make this app as a [GitHub Integration](https://github.com/integrations) but I'm not sure which parts of the API currently support integrations. Hrmm. The [GitHub docs for integrations](https://developer.github.com/early-access/integrations/) still calls it an "early access" feature. This is the key part that interests me: "an Integration can act on its own behalf — taking actions via the API directly instead of impersonating a user." But then this part makes me think maybe I shouldn't be using an integration after all: "While an Integration can perform certain actions on behalf of users, it should primarily use its own identity when performing its function."
+
+- The [Pull Requests API](https://developer.github.com/v3/pulls/) does allow me to create a new pull request on behalf of a user. And the [Repos/forks API](https://developer.github.com/v3/repos/forks/) lets me create a fork on behalf of a user.
+
+- So it looks like option 1 for the flow of this app looks like this: each user forks my starter repo, makes a commit, makes a pull request, and then I guess I'd need to use an integration installed on my organization account to programmatically accept those pull requests. The tricky part: how would I update each user's fork to pull latest changes from the central repo? Also, this would make the central repo potentially very messy! Unless every game session was saved as a separate file or separate branch... but then that's messy too!
+
+- I just realized that my idea for option 2 (having each user make a commit directly to a shared repo) would be impossible... at least without an organization-level integration to automatically add every player as a collaborator on the repo! Yup, just confirmed that both [adding collaborators](https://developer.github.com/v3/repos/collaborators/#add-user-as-a-collaborator) and [adding team members](https://developer.github.com/v3/orgs/teams/#add-or-update-team-membership) are only allowed for organizations.
+
