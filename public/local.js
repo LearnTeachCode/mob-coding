@@ -57,7 +57,7 @@ if (getAllUrlParams().access_token) {
 
 		// Render loginLinkView with the GitHub auth request URL
 			// TODO: review GitHub SCOPES when I try adding more features
-		document.getElementById('loginlink').setAttribute('href', 'https://github.com/login/oauth/authorize?client_id=' + clientId);		
+		document.getElementById('loginlink').setAttribute('href', 'https://github.com/login/oauth/authorize?client_id=' + clientId + '&scope=gist');
 		document.getElementById('loginlink').style.display = 'block';
 		
 		// Hide "...loading..." placeholder
