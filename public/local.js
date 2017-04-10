@@ -8,6 +8,8 @@ var socket = io();
 var currentPlayerId;
 var nextPlayerId;
 var animationId;
+// Meant to be temporary:
+var currentAccessToken;
 
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
@@ -44,7 +46,10 @@ if (getAllUrlParams().access_token) {
 
 	// TODO: refactor getAllUrlParams(), don't need it, just need ONE param!
 	
-	getJSON('https://api.github.com/user?access_token=' + getAllUrlParams().access_token)
+	// For now, save the access token as a global variable (I'm sure this is SUPER wrong though!)
+	currentAccessToken = getAllUrlParams().access_token;
+
+	getJSON('https://api.github.com/user?access_token=' + currentAccessToken)
 	.then(handleUserLogin).catch(handleError);
 
 // Otherwise, if user has not yet started the login process,
@@ -122,6 +127,9 @@ function handleUserLogin (userData) {
 
 	// Notify server that user logged in
 	socket.emit('loggedIn', {login: userData.login, avatar_url: userData.avatar_url});
+
+	// Test creating a Gist by making a POST reqeust via AJAX on the client side:
+	createGist();
 }
 
 // Send editorInputView data to server
@@ -440,6 +448,31 @@ function updateNextTurnView (playerName) {
 	}
 }
 
+/* -------------------------------------------------
+	GITHUB API FUNCTIONS
+---------------------------------------------------- */
+// Test making a POST request via AJAX to create a Gist
+function createGist() {
+	console.log('called createGist');
+	// use currentAccessToken
+	// set header: Authorization: token OAUTH-TOKEN-HERE
+	// use https://developer.github.com/v3/gists/#create-a-gist
+
+	var testGistObject = {
+	  "description": "a test gist!",
+	  "public": true,
+	  "files": {
+	    "README.md": {
+	      "content": "This is a test gist made with the GitHub Gists API via a client-side POST request using AJAX!"
+	    }
+	  }
+	};
+
+	postWithGitHubToken('https://api.github.com/gists', testGistObject).then(function(responseText){
+		console.log(responseText);
+	}, handleError);
+
+}
 
 /* -------------------------------------------------
 	HELPER FUNCTIONS
@@ -461,6 +494,31 @@ function get(url) {
       fail(new Error("Network error"));
     });
     req.send(null);
+  });
+}
+
+// Returns a promise for a POST request, similar to get() above
+function postWithGitHubToken(url, postDataObject) {
+  return new Promise(function(succeed, fail) {
+    var req = new XMLHttpRequest();
+
+    req.open("POST", url, true);
+    
+    // Set header for POST, like sending form data
+    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    // Set header for GitHub auth
+    req.setRequestHeader('Authorization', 'token ' + currentAccessToken);
+
+    req.addEventListener("load", function() {
+      if (req.status < 400)
+        succeed(req.responseText);
+      else
+        fail(new Error("Request failed: " + req.statusText));
+    });
+    req.addEventListener("error", function() {
+      fail(new Error("Network error"));
+    });
+    req.send(JSON.stringify(postDataObject));
   });
 }
 

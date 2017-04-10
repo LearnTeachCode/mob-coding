@@ -14,7 +14,7 @@ app.use(express.static('public'));
 // Pass GITHUB_CLIENT_ID to client when requested (using AJAX for now)
 	// TODO (later): mess around with templating engines and Express .render()?
 app.get('/github-client', function (req, res) {
-	console.log('Request recieved for /github-client route. Sending response: GITHUB_CLIENT_ID');
+	console.log('Request received for /github-client route. Sending response: GITHUB_CLIENT_ID');
 	res.end(process.env.GITHUB_CLIENT_ID);
 });
 
@@ -118,8 +118,10 @@ io.on('connection', function (socket) {
 		}
 
 		// Initialize the turn (and timer) with first connected user
+		// and create the initial GitHub gist on behlaf of the first user!
 		if (timerId == null) {
 			timerId = startTurnTimer(timerId, turnDuration, socket.id);
+			//createGist(playerData[socket.id]);
 		}
 			
 		// Broadcast current turn data to all clients (for the case where nextPlayerId changes when a second user joins)
@@ -313,4 +315,46 @@ function startTurnTimer(timerId, turnDuration, socketId) {
 	}, turnDuration); // TO DO: enable user-specified turn length
 
 	return timerId;
+}
+
+// Create a GitHub gist on behalf of this user
+function createGist(playerObject) {
+
+	// WILL THIS WORK?!?
+
+	// REWORK THIS CODE TO MAKE THE POST REQUEST:
+
+
+	// Make a POST request to https://github.com/login/oauth/access_token	
+	var githubResponseBody = '';
+	var postRequestBody = 'client_id=' + process.env.GITHUB_CLIENT_ID + '&client_secret=' + process.env.GITHUB_CLIENT_SECRET + '&code=' + req.query.code;
+
+	var request = https.request({
+	  hostname: 'github.com', 
+	  path: '/login/oauth/access_token',
+	  port: '443',
+	  method: 'POST',
+	  headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(postRequestBody),
+          'Accept': 'application/json'
+      }	 
+	}, function(response) {
+	  response.on('data', function(chunk) {
+	    githubResponseBody += chunk;	    
+	  });
+	  response.on('end', function() {	    
+	    console.log('\n*****done receiving response data:\n' + githubResponseBody + '\n');	    
+
+		// TODO (later): check the scopes, because users can authorize less than what my app requested!
+
+		// Redirect to home page again but now with the access token!
+		res.redirect('/?access_token=' + JSON.parse(githubResponseBody).access_token);		
+	  });
+	});
+
+	request.write(postRequestBody);
+	request.end();
+
+
 }

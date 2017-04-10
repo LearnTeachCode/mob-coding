@@ -276,3 +276,10 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 - I just realized that my idea for option 2 (having each user make a commit directly to a shared repo) would be impossible... at least without an organization-level integration to automatically add every player as a collaborator on the repo! Yup, just confirmed that both [adding collaborators](https://developer.github.com/v3/repos/collaborators/#add-user-as-a-collaborator) and [adding team members](https://developer.github.com/v3/orgs/teams/#add-or-update-team-membership) are only allowed for organizations.
 
+### 2017-04-10
+
+**Milestones:**
+
+- Starting keeping learning notes in my blog, instead of just dumping them all in here. (Better to reserve this doc just for short summaries.)
+
+- After a lot of wasted time because of a couple typos, I successfully created a new GitHub gist from within my app using a client-side AJAX POST request to the GitHub API!
