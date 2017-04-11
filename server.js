@@ -73,6 +73,8 @@ server.listen(port, function() {
 	- changeCursor		Broadcast: changeCursor
 	- changeScroll		Broadcast: changeScroll
 	- turnChange 		Broadcast: turnChange
+	- createNewGist		Broadcast: createNewGist
+	- newGistLink		Broadcast: newGistLink	
 -------------------------------------------------------------- */
 
 // playerData:
@@ -85,10 +87,12 @@ var editorContent = '// Type JavaScript here!';
 var editorCursorAndSelection;
 var editorScroll;
 
+var currentGist;
+
 var timerId;
 var nextTurnChangeTimestamp;
 var currentPlayerIndex;
-const turnDuration = 180000;
+const turnDuration = 5000;	// 3 min: 180000
 
 // When a user connects over websocket,
 io.on('connection', function (socket) {
@@ -121,7 +125,9 @@ io.on('connection', function (socket) {
 		// and create the initial GitHub gist on behlaf of the first user!
 		if (timerId == null) {
 			timerId = startTurnTimer(timerId, turnDuration, socket.id);
-			//createGist(playerData[socket.id]);
+			
+			// Notify the first user to create a new gist now!
+			socket.emit('createNewGist', null);
 		}
 			
 		// Broadcast current turn data to all clients (for the case where nextPlayerId changes when a second user joins)
@@ -254,6 +260,19 @@ io.on('connection', function (socket) {
 		
 	});
 
+	// When "newGistLink" event received, update state and broadcast it back out
+	socket.on('newGistLink', function (data) {
+		
+		console.log('newGistLink event received!');
+		console.log(data);
+
+		currentGist = data;
+
+		// Broadcast data to other clients
+		socket.broadcast.emit('newGistLink', data);
+		
+	});
+
 });	// End of SocketIO part of the code
 
 
@@ -282,9 +301,9 @@ function getTurnData() {
 	var nextPlayerIndex = (currentPlayerIndex + 1) % playerList.length;
 	
 	var nextPlayerId = playerList[nextPlayerIndex];
-	var nextPlayerName = playerData[nextPlayerId].login;
+	var nextPlayerName = playerData[nextPlayerId].login;	
 
-	return {millisRemaining: nextTurnChangeTimestamp - Date.now(), current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}};
+	return {millisRemaining: nextTurnChangeTimestamp - Date.now(), current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}, gist: currentGist};
 }
 
 // Initializes the turn and turn timer, returns timerId
@@ -299,7 +318,7 @@ function startTurnTimer(timerId, turnDuration, socketId) {
 	// Initialize the turn data using given user ID
 	changeTurn(socketId);		
 
-	// Every time the timer goes off, change turn again and broadcast the data
+	// Every time the timer goes off,
 	timerId = setInterval(() => {	  			  		
   		console.log('Time to change turns!');
 
@@ -315,46 +334,4 @@ function startTurnTimer(timerId, turnDuration, socketId) {
 	}, turnDuration); // TO DO: enable user-specified turn length
 
 	return timerId;
-}
-
-// Create a GitHub gist on behalf of this user
-function createGist(playerObject) {
-
-	// WILL THIS WORK?!?
-
-	// REWORK THIS CODE TO MAKE THE POST REQUEST:
-
-
-	// Make a POST request to https://github.com/login/oauth/access_token	
-	var githubResponseBody = '';
-	var postRequestBody = 'client_id=' + process.env.GITHUB_CLIENT_ID + '&client_secret=' + process.env.GITHUB_CLIENT_SECRET + '&code=' + req.query.code;
-
-	var request = https.request({
-	  hostname: 'github.com', 
-	  path: '/login/oauth/access_token',
-	  port: '443',
-	  method: 'POST',
-	  headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Content-Length': Buffer.byteLength(postRequestBody),
-          'Accept': 'application/json'
-      }	 
-	}, function(response) {
-	  response.on('data', function(chunk) {
-	    githubResponseBody += chunk;	    
-	  });
-	  response.on('end', function() {	    
-	    console.log('\n*****done receiving response data:\n' + githubResponseBody + '\n');	    
-
-		// TODO (later): check the scopes, because users can authorize less than what my app requested!
-
-		// Redirect to home page again but now with the access token!
-		res.redirect('/?access_token=' + JSON.parse(githubResponseBody).access_token);		
-	  });
-	});
-
-	request.write(postRequestBody);
-	request.end();
-
-
 }

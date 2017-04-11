@@ -8,6 +8,7 @@ var socket = io();
 var currentPlayerId;
 var nextPlayerId;
 var animationId;
+var currentGist;
 // Meant to be temporary:
 var currentAccessToken;
 
@@ -84,17 +85,20 @@ editor.getSession().setMode('ace/mode/javascript');
 	EVENT LISTENERS	/ SEND DATA TO SERVER
 
 	EVENT NAMES: 		CLIENT FUNCTIONS:
-	- connection 		Send: 		SocketIO built-in event	
+	- connection 		Send: 		SocketIO built-in event
 	- disconnect 		Send: 		SocketIO built-in event
 	- loggedIn			Send: 		handleUserLogin
 	- editorChange		Send: 		handleUserTyping
-						Receive: 	handleEditorChange	
-	- playerListChange 	Receive: 	handlePlayerListChange						
+						Receive: 	handleEditorChange
+	- playerListChange 	Receive: 	handlePlayerListChange
 	- turnChange 		Receive: 	handleTurnChange
 	- changeCursor		Send: 		handleChangeCursor
 						Receive: 	handleNewCursorData
 	- changeScroll 		Send: 		handleChangeScroll
 						Receive: 	handleNewScrollData
+	- createNewGist 	Receive: 	createNewGist
+	- newGistLink		Receive: 	handleNewGistLink
+						Send: 		(sent after creating or forking)	
 -------------------------------------------------------------- */
 editor.getSession().on('change', handleUserTyping);
 editor.getSession().selection.on('changeCursor', handleChangeCursor);
@@ -127,9 +131,6 @@ function handleUserLogin (userData) {
 
 	// Notify server that user logged in
 	socket.emit('loggedIn', {login: userData.login, avatar_url: userData.avatar_url});
-
-	// Test creating a Gist by making a POST reqeust via AJAX on the client side:
-	createGist();
 }
 
 // Send editorInputView data to server
@@ -204,6 +205,8 @@ socket.on('changeCursor', handleNewCursorData);
 socket.on('changeScroll', handleNewScrollData);
 socket.on('playerListChange', handlePlayerListChange);
 socket.on('turnChange', handleTurnChange);
+socket.on('createNewGist', createNewGist);
+socket.on('newGistLink', handleNewGistLink);
 
 // When receiving new editorInputView data from server
 function handleEditorChange (data) {
@@ -275,7 +278,10 @@ function handleTurnChange (turnData) {
 	console.dir(turnData);	
 
 	// Remove highlight from previous current player's name in playerListView
-	togglePlayerHighlight(false);
+	togglePlayerHighlight(false);	
+
+	// Temporarily save the previous player ID for later comparison
+	var previousPlayerId = currentPlayerId;
 
 	// Update local state
 	currentPlayerId = turnData.current.id;
@@ -285,15 +291,31 @@ function handleTurnChange (turnData) {
 
 	// Add highlight to the new current player's name in playerListView
 	togglePlayerHighlight(true);
-
+	
 	// If user is no longer the current player, prevent them from typing/broadcasting!
 	if (socket.id !== currentPlayerId) {
-		console.log("User's turn is over. Setting event listeners accordingly.");
+		console.log("User's turn is over.");
 		editor.setReadOnly(true);
-	// Otherwise if user's turn is now starting, enable typing/broadcasting!
+	// Otherwise if user's turn is now starting,
 	} else {
-		console.log("User's turn is starting! Setting event listeners accordingly.");
+		console.log("User's turn is starting!");
+		// let the user type/broadcast again
 		editor.setReadOnly(false);
+
+		// SAVING VERSION HISTORY WITH GITHUB GIST API:
+		
+		// If a gist has been created, and if the current player changed (and the user is the current player),
+		if (turnData.gist != null && currentPlayerId !== previousPlayerId) {
+			
+			// fork and edit the current gist on behalf of current player and send new ID to server
+			forkAndEditGist(turnData.gist.id);
+		
+		// Otherwise, JUST EDIT the current gist (if one exists) on behalf of current player and send new ID to server
+		} else if (turnData.gist != null) {
+			
+			editGist(turnData.gist.id);
+
+		}
 	}
 
 	// Update UI
@@ -301,6 +323,17 @@ function handleTurnChange (turnData) {
 	updateCurrentTurnView(turnData.current.name);
 	updateNextTurnView(turnData.next.name);	
 	toggleMyTurnHighlight();
+	// TODO: call an update function to update current Gist data view!
+}
+
+// When receiving "newGistLink" event from server,
+function handleNewGistLink (gistData) {
+	// Update local state
+	console.log("called handleNewGist");
+	console.log(gistData);
+
+	// Update views
+		// TODO: make a separate view-updating function for this!
 }
 
 /* -------------------------------------------------
@@ -451,11 +484,10 @@ function updateNextTurnView (playerName) {
 /* -------------------------------------------------
 	GITHUB API FUNCTIONS
 ---------------------------------------------------- */
-// Test making a POST request via AJAX to create a Gist
-function createGist() {
-	console.log('called createGist');
-	// use currentAccessToken
-	// set header: Authorization: token OAUTH-TOKEN-HERE
+// Make a POST request via AJAX to create a Gist for the current user
+function createNewGist() {
+	console.log('called createNewGist');
+	// use currentAccessToken	
 	// use https://developer.github.com/v3/gists/#create-a-gist
 
 	var testGistObject = {
@@ -470,6 +502,60 @@ function createGist() {
 
 	postWithGitHubToken('https://api.github.com/gists', testGistObject).then(function(responseText){
 		console.log(responseText);
+
+		var gistObject = JSON.parse(responseText);
+		
+		// Save new gist ID and URL locally
+		currentGist = {id: gistObject.id, url: gistObject.url};
+
+		// Send new gist data to server
+		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.url});
+
+	}, handleError);
+
+}
+
+// Make a POST request via AJAX to update a given Gist with the current code
+function editGist(gistId) {
+	console.log('called editGist');	
+	// use https://developer.github.com/v3/gists/#edit-a-gist
+
+	var testGistObject = {
+	  "description": "a test gist!",
+	  "public": true,
+	  "files": {
+	    "README.md": {
+	      "content": "Updated content! This is a test gist made with the GitHub Gists API via a client-side POST request using AJAX!"
+	    }
+	  }
+	};
+
+	postWithGitHubToken('https://api.github.com/gists/' + gistId, testGistObject).then(function(responseText){
+		console.log(responseText);
+	}, handleError);
+
+}
+
+// Make a POST request via AJAX to fork a given Gist, then commit to it with editGist()
+function forkAndEditGist(gistId) {
+	console.log('called forkAndEditGist');	
+	// use https://developer.github.com/v3/gists/#fork-a-gist
+
+	// TODO later: see if I can refactor this function, maybe have it return a promise, so I can chain it with editGist better?
+
+	var testGistObject = {"test": "no data needed"};
+
+	postWithGitHubToken('https://api.github.com/gists/' + gistId + '/forks', testGistObject).then(function(responseText){
+		console.log(responseText);
+		
+		var gistObject = JSON.parse(responseText);	
+
+		// Send new gist data to server
+		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.url});
+
+		// Then edit the new gist:
+		editGist(gistObject.id);
+
 	}, handleError);
 
 }
