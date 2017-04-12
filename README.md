@@ -282,7 +282,7 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 **Milestones:**
 
-- Starting keeping learning notes in my blog, instead of just dumping them all in here. (Better to reserve this doc just for short summaries.)
+- Started keeping learning notes in my blog, instead of just dumping them all in here. (Better to reserve this doc just for short summaries.)
 
 - After a lot of wasted time because of a couple typos, I successfully created a new GitHub gist from within my app using a client-side AJAX POST request to the GitHub API!
 
@@ -295,3 +295,9 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - Successfully created, forked, and edited a gist using the GitHub API!
 - Integrated new events and logic flow into the app for saving version history using GitHub gists!
 - The app can now create and edit gists on each user's turn, but not working for forks yet.
+
+### 2017-04-12
+
+**Today's daily learning blog post: http://learningnerd.com/2017/04/12/**
+
+**Milestones:**

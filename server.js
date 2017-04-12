@@ -92,7 +92,7 @@ var currentGist;
 var timerId;
 var nextTurnChangeTimestamp;
 var currentPlayerIndex;
-const turnDuration = 5000;	// 3 min: 180000
+const turnDuration = 45000;	// 3 min: 180000
 
 // When a user connects over websocket,
 io.on('connection', function (socket) {

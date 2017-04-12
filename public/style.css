@@ -52,6 +52,10 @@ body {
   padding-left: 20px;
 }
 
+header h1, header p {
+  display: inline-block;
+  padding-left: 1em;
+}
 
 /* -------------------------------------------------
         ELEMENTS / TYPOGRAPHY / SPACING

@@ -22,6 +22,7 @@ var currentAccessToken;
     - nextturn     		name of next player
     - playerlist   		<ol> list of player names
     - myname       		<span> user's name
+    - currentgist 		<p> displays latest gist info
 ---------------------------------------------------- */
 var loginModalView = document.getElementById('loginmodal');
 var loginButtonView = document.getElementById('loginbutton');
@@ -32,7 +33,7 @@ var nextTurnView = document.getElementById('nextturn');
 var playerListView = document.getElementById('playerlist');
 var myNameView = document.getElementById('myname');
 var myNameListItemView = document.getElementById('me');
-
+var currentGistView = document.getElementById('currentgist');
 /* -------------------------------------------------
 	GITHUB AUTHENTICATION	
 ---------------------------------------------------- */
@@ -323,7 +324,7 @@ function handleTurnChange (turnData) {
 	updateCurrentTurnView(turnData.current.name);
 	updateNextTurnView(turnData.next.name);	
 	toggleMyTurnHighlight();
-	// TODO: call an update function to update current Gist data view!
+	updateCurrentGistView(turnData.gist);
 }
 
 // When receiving "newGistLink" event from server,
@@ -333,7 +334,7 @@ function handleNewGistLink (gistData) {
 	console.log(gistData);
 
 	// Update views
-		// TODO: make a separate view-updating function for this!
+	updateCurrentGistView(gistData);
 }
 
 /* -------------------------------------------------
@@ -481,6 +482,11 @@ function updateNextTurnView (playerName) {
 	}
 }
 
+// Append to a list of gist links for this game
+function updateCurrentGistView (gistData) {		
+	currentGistView.innerHTML = '<strong><a href="' + gistData.url + '">Bookmark/share this code on GitHub!</a></strong>';	
+}
+
 /* -------------------------------------------------
 	GITHUB API FUNCTIONS
 ---------------------------------------------------- */
@@ -506,10 +512,12 @@ function createNewGist() {
 		var gistObject = JSON.parse(responseText);
 		
 		// Save new gist ID and URL locally
-		currentGist = {id: gistObject.id, url: gistObject.url};
+		currentGist = {id: gistObject.id, url: gistObject.html_url};
 
 		// Send new gist data to server
-		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.url});
+		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url});
+
+		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url});
 
 	}, handleError);
 
@@ -551,10 +559,12 @@ function forkAndEditGist(gistId) {
 		var gistObject = JSON.parse(responseText);	
 
 		// Send new gist data to server
-		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.url});
+		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url});
 
 		// Then edit the new gist:
 		editGist(gistObject.id);
+
+		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url});
 
 	}, handleError);
 
