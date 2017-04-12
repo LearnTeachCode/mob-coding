@@ -12,6 +12,9 @@ var currentGist;
 // Meant to be temporary:
 var currentAccessToken;
 
+// Quick fix to check for first turn, for first gist edit
+var gistNewlyCreated;
+
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
 	- loginmodal		container for login screen
@@ -92,6 +95,7 @@ editor.getSession().setMode('ace/mode/javascript');
 	- editorChange		Send: 		handleUserTyping
 						Receive: 	handleEditorChange
 	- playerListChange 	Receive: 	handlePlayerListChange
+	- updateState		Receive: 	handleUpdateState
 	- turnChange 		Receive: 	handleTurnChange
 	- changeCursor		Send: 		handleChangeCursor
 						Receive: 	handleNewCursorData
@@ -136,14 +140,14 @@ function handleUserLogin (userData) {
 
 // Send editorInputView data to server
 function handleUserTyping (event) {
-	console.log('handleUserTyping event! value: ');
-	console.log(event);
+	//console.log('handleUserTyping event! value: ');
+	//console.log(event);
 
-	console.log('%c ' + editor.getValue(), 'color: green; font-weight: bold;');
+	//console.log('%c ' + editor.getValue(), 'color: green; font-weight: bold;');
 	
 	// If user is the current player, they can broadcast
 	if (socket.id === currentPlayerId) {
-		console.log('Sending data to server!')
+		//console.log('Sending data to server!')
 		// Send data to server
 		socket.emit( 'editorChange', editor.getValue() );
 	}
@@ -157,8 +161,8 @@ function preventUserTyping (event) {
 
 // Send user's new name to server and update UI
 function handleUserNameChange (event) {
-	console.log('handleUserNameChange event! value: ');
-	console.log('%c ' + myNameView.textContent, 'color: green; font-weight: bold;');
+	//console.log('handleUserNameChange event! value: ');
+	//console.log('%c ' + myNameView.textContent, 'color: green; font-weight: bold;');
 	
 	// Update UI if user is the current or next player
 	if (currentPlayerId === socket.id) {
@@ -173,8 +177,8 @@ function handleUserNameChange (event) {
 
 // Send cursor and selection data to server
 function handleChangeCursor (event) {
-	console.log('changeCursor fired!');
-	console.log('%c ' + event, 'color: green; font-weight: bold;');	
+	//console.log('changeCursor fired!');
+	//console.log('%c ' + event, 'color: green; font-weight: bold;');	
 
 	// Cursor object:
 	// {column, row}
@@ -188,8 +192,8 @@ function handleChangeCursor (event) {
 
 // Send scroll data to server
 function handleChangeScroll (event) {
-	console.log('changeScroll (left or top) fired!');
-	console.log('%c scrollLeft: ' + editor.getSession().getScrollLeft() + ', scrollTop: ' + editor.getSession().getScrollTop(), 'color: green; font-weight: bold;');
+	//console.log('changeScroll (left or top) fired!');
+	//console.log('%c scrollLeft: ' + editor.getSession().getScrollLeft() + ', scrollTop: ' + editor.getSession().getScrollTop(), 'color: green; font-weight: bold;');
 
 	// Send to server:
 	socket.emit('changeScroll', { scrollLeft: editor.getSession().getScrollLeft(), scrollTop: editor.getSession().getScrollTop() });	
@@ -205,22 +209,23 @@ socket.on('editorChange', handleEditorChange);
 socket.on('changeCursor', handleNewCursorData);
 socket.on('changeScroll', handleNewScrollData);
 socket.on('playerListChange', handlePlayerListChange);
+socket.on('updateState', handleUpdateState);
 socket.on('turnChange', handleTurnChange);
 socket.on('createNewGist', createNewGist);
 socket.on('newGistLink', handleNewGistLink);
 
 // When receiving new editorInputView data from server
 function handleEditorChange (data) {
-	console.log('editorChange event received!');
-	console.log('%c ' + data, 'color: blue; font-weight: bold;');
+	//console.log('editorChange event received!');
+	//console.log('%c ' + data, 'color: blue; font-weight: bold;');
 
 	updateEditorView(data);
 }
 
 // When receiving new cursor/selection data from server
 function handleNewCursorData (data) {
-	console.log('%c cursorChange event received!', 'color: blue; font-weight: bold;');
-	console.dir(data);
+	//console.log('%c cursorChange event received!', 'color: blue; font-weight: bold;');
+	//console.dir(data);
 
 	// Set Ace editor's cursor and selection range to match
 	var updatedRange = new Range(data.range.start.row, data.range.start.column, data.range.end.row, data.range.end.column);
@@ -229,8 +234,8 @@ function handleNewCursorData (data) {
 
 // When receiving new scroll data from server
 function handleNewScrollData (data) {
-	console.log('%c scrollChange event received!', 'color: blue; font-weight: bold;');
-	console.dir(data); 
+	//console.log('%c scrollChange event received!', 'color: blue; font-weight: bold;');
+	//console.dir(data); 
 
 	// Set Ace editor's scroll position to match
 	editor.getSession().setScrollLeft(data.scrollLeft);
@@ -239,8 +244,8 @@ function handleNewScrollData (data) {
 
 // When receiving new player list data from server
 function handlePlayerListChange (playerData) {
-	console.log('%c playerListChange event received!', 'color: blue; font-weight: bold;');
-	console.dir(playerData);
+	//console.log('%c playerListChange event received!', 'color: blue; font-weight: bold;');
+	//console.dir(playerData);
 
 	// Transform the data!!
 
@@ -259,27 +264,28 @@ function handlePlayerListChange (playerData) {
 	var playerArray = playerIdArray.map(function(id){
 		return {id: id, login: playerData[id].login, avatar_url: playerData[id].avatar_url};
 	});
-	console.log('playerArray:');
-	console.log(playerArray);
+	//console.log('playerArray:');
+	//console.log(playerArray);
 
 	// Get names of current and next players based on saved local IDs
 	var currentPlayerName = playerData[currentPlayerId].login;
 	var nextPlayerName = playerData[nextPlayerId].login;
 
-	console.log('Updating UI with currentPlayerName: ' + currentPlayerName + ', nextPlayerName: ' + nextPlayerName);
+	//console.log('Updating UI with currentPlayerName: ' + currentPlayerName + ', nextPlayerName: ' + nextPlayerName);
+	
 	// Update the UI
 	updatePlayerListView(playerArray);
 	updateCurrentTurnView(currentPlayerName);
 	updateNextTurnView(nextPlayerName);
 }
 
-// When receiving new myNameView data from server
+// When receiving turnChange event from server
 function handleTurnChange (turnData) {
-	console.log('%c turnChange event received!', 'color: blue; font-weight: bold;');
-	console.dir(turnData);	
+	console.log('%c turnChange event received! TIME: ' + new Date().toString().substring(16,25), 'color: blue; font-weight: bold;');
+	//console.dir(turnData);	
 
 	// Remove highlight from previous current player's name in playerListView
-	togglePlayerHighlight(false);	
+	togglePlayerHighlight(false);
 
 	// Temporarily save the previous player ID for later comparison
 	var previousPlayerId = currentPlayerId;
@@ -288,10 +294,27 @@ function handleTurnChange (turnData) {
 	currentPlayerId = turnData.current.id;
 	nextPlayerId = turnData.next.id;
 
-	console.log('Updated local state. Current ID: ' + currentPlayerId + ', next ID: ' + nextPlayerId);
+	// If user's turn is ending, fork and/or edit the gist before passing control to next player!	
+	if (socket.id === previousPlayerId) {
+		console.log("User's turn is about to end.");
 
-	// Add highlight to the new current player's name in playerListView
-	togglePlayerHighlight(true);
+		// If a gist has been created, AND it's been edited at least once (first game round ended),
+		// AND if the current player is about to change (and the user is the previous player),
+		if (turnData.gist != null && !gistNewlyCreated && currentPlayerId !== previousPlayerId) {
+			
+			//console.log("handleTurnChange: now forking and editing gist " + turnData.gist.id);
+
+			// fork and edit the current gist on behalf of previous player and send new ID to server
+			forkAndEditGist(turnData.gist.id);
+		
+		// Otherwise, JUST EDIT the current gist (if one exists) on behalf of previous player and send new ID to server
+		} else if (turnData.gist != null) {
+		
+			//console.log("handleTurnChange: now editing gist " + turnData.gist.id);	
+			editGist(turnData.gist.id);
+
+		}
+	}
 	
 	// If user is no longer the current player, prevent them from typing/broadcasting!
 	if (socket.id !== currentPlayerId) {
@@ -303,22 +326,38 @@ function handleTurnChange (turnData) {
 		// let the user type/broadcast again
 		editor.setReadOnly(false);
 
-		// SAVING VERSION HISTORY WITH GITHUB GIST API:
-		
-		// If a gist has been created, and if the current player changed (and the user is the current player),
-		if (turnData.gist != null && currentPlayerId !== previousPlayerId) {
-			
-			// fork and edit the current gist on behalf of current player and send new ID to server
-			forkAndEditGist(turnData.gist.id);
-		
-		// Otherwise, JUST EDIT the current gist (if one exists) on behalf of current player and send new ID to server
-		} else if (turnData.gist != null) {
-			
-			editGist(turnData.gist.id);
-
-		}
 	}
 
+	// Update UI
+	togglePlayerHighlight(true);
+	updateTimeLeftView(turnData.millisRemaining);
+	updateCurrentTurnView(turnData.current.name);
+	updateNextTurnView(turnData.next.name);	
+	toggleMyTurnHighlight();
+	updateCurrentGistView(turnData.gist);
+}
+
+// When receiving updateState event from server,
+// when new users join the game! 
+function handleUpdateState (turnData) {
+	//console.log('%c handleUpdateState event received! TIME: ' + new Date().toString().substring(16,25), 'color: blue; font-weight: bold;');
+	//console.dir(turnData);	
+
+	// Remove highlight from previous current player's name in playerListView
+	togglePlayerHighlight(false);	
+
+	// Temporarily save the previous player ID for later comparison
+	var previousPlayerId = currentPlayerId;
+
+	// Update local state
+	currentPlayerId = turnData.current.id;
+	nextPlayerId = turnData.next.id;
+
+	//console.log('Updated local state. Current ID: ' + currentPlayerId + ', next ID: ' + nextPlayerId);
+
+	// Add highlight to the new current player's name in playerListView
+	togglePlayerHighlight(true);
+	
 	// Update UI
 	updateTimeLeftView(turnData.millisRemaining);
 	updateCurrentTurnView(turnData.current.name);
@@ -327,10 +366,11 @@ function handleTurnChange (turnData) {
 	updateCurrentGistView(turnData.gist);
 }
 
+
 // When receiving "newGistLink" event from server,
 function handleNewGistLink (gistData) {
 	// Update local state
-	console.log("called handleNewGist");
+	console.log("called handleNewGist at " + new Date().toString().substring(16,25), 'color: green; font-weight: bold;');
 	console.log(gistData);
 
 	// Update views
@@ -430,7 +470,7 @@ function updateEditorView (editorData) {
 // Update timeLeftView with the time remaining	
 function updateTimeLeftView (timerDurationMillis) {
 
-	console.log('updateTimeLeftView CALLED with: ' + timerDurationMillis);
+	//console.log('updateTimeLeftView CALLED with: ' + timerDurationMillis);
 
 	var turnEndTimestamp = Date.now() + timerDurationMillis;
 
@@ -456,7 +496,7 @@ function updateTimeLeftView (timerDurationMillis) {
 
 // Update currentTurnView with current player's name
 function updateCurrentTurnView (playerName) {
-	console.log('Called updateCurrentTurnView with: ' + playerName);
+	//console.log('Called updateCurrentTurnView with: ' + playerName);
 	currentTurnView.textContent = playerName;
 
 	// If user is the current player, highlight their name
@@ -470,7 +510,7 @@ function updateCurrentTurnView (playerName) {
 
 // Update nextTurnView with next player's name
 function updateNextTurnView (playerName) {
-	console.log('Called updateNextTurnView with: ' + playerName);
+	//console.log('Called updateNextTurnView with: ' + playerName);
 	nextTurnView.textContent = playerName;
 
 	// If user is the next player, highlight their name
@@ -484,7 +524,7 @@ function updateNextTurnView (playerName) {
 
 // Append to a list of gist links for this game
 function updateCurrentGistView (gistData) {		
-	currentGistView.innerHTML = '<strong><a href="' + gistData.url + '">Bookmark/share this code on GitHub!</a></strong>';	
+	currentGistView.innerHTML = '<strong>Latest code:</strong> <a href="' + gistData.url + '">' + gistData.url + '</a>';	
 }
 
 /* -------------------------------------------------
@@ -492,22 +532,27 @@ function updateCurrentGistView (gistData) {
 ---------------------------------------------------- */
 // Make a POST request via AJAX to create a Gist for the current user
 function createNewGist() {
-	console.log('called createNewGist');
+	console.log('called createNewGist at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
 	// use currentAccessToken	
 	// use https://developer.github.com/v3/gists/#create-a-gist
 
-	var testGistObject = {
-	  "description": "a test gist!",
+	// Quick fix for editing gist on first turn
+	gistNewlyCreated = true;
+
+	var gistObject = {
+	  "description": "A saved mob programming session with Learn Teach Code!",
 	  "public": true,
 	  "files": {
-	    "README.md": {
-	      "content": "This is a test gist made with the GitHub Gists API via a client-side POST request using AJAX!"
+	    "mob-coding-challenge.js": {
+	      "content": editor.getValue() + '\n'
 	    }
 	  }
 	};
 
-	postWithGitHubToken('https://api.github.com/gists', testGistObject).then(function(responseText){
-		console.log(responseText);
+	postWithGitHubToken('https://api.github.com/gists', gistObject).then(function(responseText){
+		//console.log(responseText);
+		console.log('createNewGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
+		console.dir(gistObject);
 
 		var gistObject = JSON.parse(responseText);
 		
@@ -525,37 +570,43 @@ function createNewGist() {
 
 // Make a POST request via AJAX to update a given Gist with the current code
 function editGist(gistId) {
-	console.log('called editGist');	
+	console.log('called editGist at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
 	// use https://developer.github.com/v3/gists/#edit-a-gist
 
-	var testGistObject = {
-	  "description": "a test gist!",
+	var gistObject = {
+	  "description": "A saved mob programming session with Learn Teach Code!",
 	  "public": true,
 	  "files": {
-	    "README.md": {
-	      "content": "Updated content! This is a test gist made with the GitHub Gists API via a client-side POST request using AJAX!"
+	    "mob-coding-challenge.js": {
+	      "content": editor.getValue() + '\n'
 	    }
 	  }
 	};
 
-	postWithGitHubToken('https://api.github.com/gists/' + gistId, testGistObject).then(function(responseText){
-		console.log(responseText);
+	postWithGitHubToken('https://api.github.com/gists/' + gistId, gistObject).then(function(responseText){
+		//console.log(responseText);
+		console.log('editGist: response received at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
+		console.dir(gistObject);
+
+		// Quick fix for editing gist on first turn
+		gistNewlyCreated = false;
 	}, handleError);
 
 }
 
 // Make a POST request via AJAX to fork a given Gist, then commit to it with editGist()
 function forkAndEditGist(gistId) {
-	console.log('called forkAndEditGist');	
+	console.log('called forkAndEditGist at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
 	// use https://developer.github.com/v3/gists/#fork-a-gist
 
 	// TODO later: see if I can refactor this function, maybe have it return a promise, so I can chain it with editGist better?
 
-	var testGistObject = {"test": "no data needed"};
+	var gistObject = {"test": ""};
 
-	postWithGitHubToken('https://api.github.com/gists/' + gistId + '/forks', testGistObject).then(function(responseText){
-		console.log(responseText);
-		
+	postWithGitHubToken('https://api.github.com/gists/' + gistId + '/forks', gistObject).then(function(responseText){
+		//console.log(responseText);
+		console.log('forkAndEditGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');		
+
 		var gistObject = JSON.parse(responseText);	
 
 		// Send new gist data to server
