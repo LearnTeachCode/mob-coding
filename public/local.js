@@ -305,13 +305,13 @@ function handleTurnChange (turnData) {
 			//console.log("handleTurnChange: now forking and editing gist " + turnData.gist.id);
 
 			// fork and edit the current gist on behalf of previous player and send new ID to server
-			forkAndEditGist(turnData.gist.id);
+			forkAndEditGist(turnData.gist.id, editor.getValue());
 		
 		// Otherwise, JUST EDIT the current gist (if one exists) on behalf of previous player and send new ID to server
 		} else if (turnData.gist != null) {
 		
 			//console.log("handleTurnChange: now editing gist " + turnData.gist.id);	
-			editGist(turnData.gist.id);
+			editGist(turnData.gist.id, editor.getValue());
 
 		}
 	}
@@ -537,7 +537,7 @@ function createNewGist() {
 	// use https://developer.github.com/v3/gists/#create-a-gist
 
 	// Quick fix for editing gist on first turn
-	gistNewlyCreated = true;
+	gistNewlyCreated = true;	
 
 	var gistObject = {
 	  "description": "A saved mob programming session with Learn Teach Code!",
@@ -569,16 +569,16 @@ function createNewGist() {
 }
 
 // Make a POST request via AJAX to update a given Gist with the current code
-function editGist(gistId) {
+function editGist(gistId, codeEditorContent) {
 	console.log('called editGist at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
-	// use https://developer.github.com/v3/gists/#edit-a-gist
+	// use https://developer.github.com/v3/gists/#edit-a-gist	
 
 	var gistObject = {
 	  "description": "A saved mob programming session with Learn Teach Code!",
 	  "public": true,
 	  "files": {
 	    "mob-coding-challenge.js": {
-	      "content": editor.getValue() + '\n'
+	      "content": codeEditorContent + '\n'
 	    }
 	  }
 	};
@@ -595,7 +595,7 @@ function editGist(gistId) {
 }
 
 // Make a POST request via AJAX to fork a given Gist, then commit to it with editGist()
-function forkAndEditGist(gistId) {
+function forkAndEditGist(gistId, codeEditorContent) {
 	console.log('called forkAndEditGist at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
 	// use https://developer.github.com/v3/gists/#fork-a-gist
 
@@ -613,7 +613,7 @@ function forkAndEditGist(gistId) {
 		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url});
 
 		// Then edit the new gist:
-		editGist(gistObject.id);
+		editGist(gistObject.id, codeEditorContent);
 
 		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url});
 

@@ -301,3 +301,13 @@ A mob programming web app for real-time collaboration at in-person events. The g
 **Today's daily learning blog post: http://learningnerd.com/2017/04/12/**
 
 **Milestones:**
+
+- Fixed the turn change logic to work properly with saving version history using the GitHub Gists API.
+
+### 2017-04-13
+
+**Today's daily learning blog post: http://learningnerd.com/2017/04/13/**
+
+**Milestones:**
+
+- Fixed the bug where any code written in the delay between forking and editing a gist gets attributed to the wrong player.
