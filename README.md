@@ -5,8 +5,8 @@ A mob programming web app for real-time collaboration at in-person events. The g
 **Table of Contents:**
   - [Learn About Mob Programming](#learn-about-mob-programming)
   - [Project Goals](#project-goals)
-    - [Next Goals](#)
-    - [Goals for Version 1.0.0 (DONE!)](#)
+    - [Next Goals (for Version 2.0.0)](#next-goals-for-version-200)
+    - [Goals for Version 1.0.0 (DONE!)](#goals-for-version-100-done)
   - [Project Log](#project-log)
 
 ## Learn About Mob Programming
@@ -18,7 +18,7 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 ## Project Goals
 
-## Next Goals (for Version 2.0.0)
+### Next Goals (for Version 2.0.0)
 
 - (Done) Simple login system using GitHub authentication
 - (Done) Display players' GitHub usernames and profile photos
@@ -32,7 +32,7 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - Reintroduce non-turn-based collaborative text editor mode
 - (Crazy idea for later) Add support for multiplexed/tabbed invididual code editors that users or moderators can watch all at once, like a control room at a TV production studio! Maybe users can set permissions to make their "room" open to collaborators or just to viewers.
 
-## Goals for Version 1.0.0 (DONE!)
+### Goals for Version 1.0.0 (DONE!)
 
 - Just a turn-based, collaborative plain text box!
 - Countdown timer displays the remaining time for each player and resets after each turn
