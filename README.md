@@ -3,11 +3,13 @@
 A mob programming web app for real-time collaboration at in-person events. The goal is to make the most of meetups/classes where a group of people with laptops are all sitting together in a room!
 
 **Table of Contents:**
-  - [Learn about mob programming:](#learn-about-mob-programming)
+  - [Learn About Mob Programming](#learn-about-mob-programming)
   - [Project Goals](#project-goals)
+    - [Next Goals](#)
+    - [Goals for Version 1.0.0 (DONE!)](#)
   - [Project Log](#project-log)
 
-## Learn About Mob Programming:
+## Learn About Mob Programming
 
 - [What is mob programming?](https://www.agilealliance.org/glossary/mob-programming/) by the Agile Alliance
 - Video: ["Mob Programming, A Whole Team Approach"](https://www.youtube.com/watch?v=8cy64qkgTyI) by Woody Zuill
@@ -16,44 +18,28 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 ## Project Goals
 
-**Next Goals (for Version 2.0.0):**
+## Next Goals (for Version 2.0.0)
 
 - (Done) Simple login system using GitHub authentication
-
 - (Done) Display players' GitHub usernames and profile photos
-
 - (Done) Use a nice code editor for features like line numbers, syntax highlighting, etc (Using [Ace](https://ace.c9.io) for this)
-
 - Save code from each session using GitHub API to make commits!
-
 - And then give credit to each contributor with a commit on every turn change
-
 - Run code within the app and display the output, similar to [repl.it](https://repl.it/) or [CodePen](http://codepen.io/) or [kodeWeave](https://github.com/mikethedj4/kodeWeave) or [Dabblet](https://github.com/LeaVerou/dabblet)
-
 - Add moderator controls (ideas include kicking out players, pausing the game, choosing whose turn it is, changing the timer duration, etc)
-
 - (Maybe) Reintroduce anonymous user feature (just that they don't get credit for their commits, or they can only observe?)
-
 - Add support for multiple game rooms
-
 - Reintroduce non-turn-based collaborative text editor mode
-
 - (Crazy idea for later) Add support for multiplexed/tabbed invididual code editors that users or moderators can watch all at once, like a control room at a TV production studio! Maybe users can set permissions to make their "room" open to collaborators or just to viewers.
 
-**DONE: Goals for Version 1.0.0:**
+## Goals for Version 1.0.0 (DONE!)
 
 - Just a turn-based, collaborative plain text box!
-
 - Countdown timer displays the remaining time for each player and resets after each turn
-
 - Players can enter their name or stay anonymous
-
 - Active player list displays names and highlights whose turn it is
-
 - App displays who has the current turn and who has the next turn
-
 - App gets the user's attention somehow when it's their turn
-
 - Tools: NodeJS, Express, SocketIO, plain vanilla JavaScript and HTML/CSS
 
 ## Project Log
