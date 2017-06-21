@@ -1,7 +1,7 @@
 {
   "name": "mob-coding",
   "version": "1.0.0",
-  "description": "A mob programming web app for real-time collaboration at in-person events.",
+  "description": "A turn-based mob programming web app for real-time collaboration on coding challenges.",
   "author": "Liz Krane",
   "main": "server.js",
   "scripts": {
