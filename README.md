@@ -23,8 +23,7 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - (Done) Simple login system using GitHub authentication
 - (Done) Display players' GitHub usernames and profile photos
 - (Done) Use a nice code editor for features like line numbers, syntax highlighting, etc (Using [Ace](https://ace.c9.io) for this)
-- Save code from each session using GitHub API to make commits!
-- And then give credit to each contributor with a commit on every turn change
+- (Done) Save code from each session in a Gist using GitHub API and give credit to each contributor accordingly!
 - Run code within the app and display the output, similar to [repl.it](https://repl.it/) or [CodePen](http://codepen.io/) or [kodeWeave](https://github.com/mikethedj4/kodeWeave) or [Dabblet](https://github.com/LeaVerou/dabblet)
 - Add moderator controls (ideas include kicking out players, pausing the game, choosing whose turn it is, changing the timer duration, etc)
 - (Maybe) Reintroduce anonymous user feature (just that they don't get credit for their commits, or they can only observe?)
