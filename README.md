@@ -2,14 +2,16 @@
 
 A mob programming web app for real-time collaboration at in-person events. The goal is to make the most of meetups/classes where a group of people with laptops are all sitting together in a room!
 
-## Learn about mob programming:
+**Table of Contents:**
+  - [Learn about mob programming:](#learn-about-mob-programming)
+  - [Project Goals](#project-goals)
+  - [Project Log](#project-log)
+
+## Learn About Mob Programming:
 
 - [What is mob programming?](https://www.agilealliance.org/glossary/mob-programming/) by the Agile Alliance
-
 - Video: ["Mob Programming, A Whole Team Approach"](https://www.youtube.com/watch?v=8cy64qkgTyI) by Woody Zuill
-
 - Article: ["Introducing Mob programming: The best team technique you've (probably) never heard of"](http://www.infoworld.com/article/2941233/application-development/introducing-mob-programming-the-best-team-technique-youve-probably-never-heard-of.html) by Daniel P. Dern
-
 - [MobProgramming.org and the Mob Programming Conference](http://mobprogramming.org/)
 
 ## Project Goals
