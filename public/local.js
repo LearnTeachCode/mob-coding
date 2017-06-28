@@ -330,7 +330,7 @@ function handleTurnChange (turnData) {
 	updateCurrentTurnView(turnData.current.name);
 	updateNextTurnView(turnData.next.name);	
 	toggleMyTurnHighlight();
-	updateCurrentGistView(turnData.gist);
+	if (turnData.gist != null) updateCurrentGistView(turnData.gist);
 }
 
 // When receiving updateState event from server,
@@ -358,8 +358,8 @@ function handleUpdateState (turnData) {
 	updateTimeLeftView(turnData.millisRemaining);
 	updateCurrentTurnView(turnData.current.name);
 	updateNextTurnView(turnData.next.name);	
-	toggleMyTurnHighlight();
-	updateCurrentGistView(turnData.gist);
+	toggleMyTurnHighlight();	
+	if (turnData.gist != null) updateCurrentGistView(turnData.gist);
 }
 
 
@@ -368,7 +368,6 @@ function handleNewGistLink (gistData) {
 	// Update local state
 	console.log("called handleNewGist at " + new Date().toString().substring(16,25), 'color: green; font-weight: bold;');
 	console.log(gistData);
-
 	// Update views
 	updateCurrentGistView(gistData);
 }
@@ -519,7 +518,7 @@ function updateNextTurnView (playerName) {
 }
 
 // Append to a list of gist links for this game
-function updateCurrentGistView (gistData) {		
+function updateCurrentGistView (gistData) {
 	currentGistView.innerHTML = '<strong>Latest code:</strong> <a href="' + gistData.url + '">' + gistData.url + '</a>';	
 }
 
@@ -544,10 +543,11 @@ function handleCreateNewGist() {
 
 	postWithGitHubToken('https://api.github.com/gists', gistObject).then(function(responseText){
 		//console.log(responseText);
-		console.log('handleCreateNewGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
-		console.dir(gistObject);
+		console.log('handleCreateNewGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');		
 
 		var gistObject = JSON.parse(responseText);
+
+		console.dir(gistObject);
 		
 		// Save new gist ID and URL locally
 		currentGist = {id: gistObject.id, url: gistObject.html_url};
@@ -579,7 +579,7 @@ function editGist(gistId, codeEditorContent) {
 	postWithGitHubToken('https://api.github.com/gists/' + gistId, gistObject).then(function(responseText){
 		//console.log(responseText);
 		console.log('editGist: response received at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
-		console.dir(gistObject);
+		console.dir(JSON.parse(responseText));
 
 	}, handleError);
 
@@ -599,6 +599,7 @@ function forkAndEditGist(gistId, codeEditorContent) {
 		console.log('forkAndEditGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');		
 
 		var gistObject = JSON.parse(responseText);	
+		console.dir(gistObject);
 
 		// Send new gist data to server
 		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url});
