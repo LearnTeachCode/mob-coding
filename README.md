@@ -7,7 +7,11 @@ A mob programming web app for real-time collaboration at in-person events. The g
   - [Project Goals](#project-goals)
     - [Next Goals (for Version 2.0.0)](#next-goals-for-version-200)
     - [Goals for Version 1.0.0 (DONE!)](#goals-for-version-100-done)
+  - [Version 1.0.0 Documentation](#version-100-documentation)
+    - [Events List](#events-list)
+    - [Flowchart](#flowchart)
   - [Project Log](#project-log)
+
 
 ## Learn About Mob Programming
 
@@ -40,6 +44,158 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - App displays who has the current turn and who has the next turn
 - App gets the user's attention somehow when it's their turn
 - Tools: NodeJS, Express, SocketIO, plain vanilla JavaScript and HTML/CSS
+
+
+## Version 1.0.0 Documentation
+
+### Flowchart
+
+![Updated mob coding flowchart](https://learningnerd.com/images/mobcoding-flowchart-2017-06-28.svg)
+
+### Events List
+
+<table>
+  <thead>
+    <tr>
+      <th>Event Name</th>
+      <th>Description</th>
+      <th>Server Actions</th>
+      <th>Client Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>connection</td>
+      <td>When client connects to SocketIO</td>
+      <td>Start the whole app!</td>
+      <td><em>Not used</em></td>      
+    </tr>
+    <tr>
+      <td>disconnect</td>
+      <td>When a client disconnects from SocketIO</td>
+      <td>        
+          Remove disconnected user from playerList.<br><br>
+          If no logged-in players are left, reset the game!<br><br>
+          If the disconnected user was the current player, restart timer and change the turn!<br><br>
+          Broadcast "updateState" to all other clients.<br><br>
+          Broadcast "playerListChange" to all other clients.<br><br>        
+      </td>
+      <td>Stop the timer view.</td>
+    </tr>
+    <tr>
+      <td>userLogin</td>
+      <td>When server confirms a client is logged in</td>
+      <td>        
+          Add user info to playerList.<br><br>
+          Send current state of the text editor to the new client, broadcasting "editorTextChange", "editorCursorChange", and "editorScrollChange" if needed.<br><br>
+          If first user, initialize the game!<br><br>
+          Broadcast  "updateState" to <em>all</em> clients.<br><br>
+          Broadcast "playerListChange" to <em>all</em> clients.<br><br>        
+      </td>
+      <td>Upon successful GitHub authentication, send "userLogin" event and user data to the server.</td>
+    </tr>
+    <tr>
+      <td>playerListChange</td>
+      <td>When server confirms a player has joined or left</td>
+      <td>Broadcast player list to clients, triggered by "userLogin" and "disconnect" events.</td>
+      <td>Update UI for player list, current turn, and next turn.</td>
+    </tr>
+    <tr>
+      <td>updateState</td>
+      <td>When game state changes and clients need to be synced up</td>
+      <td>Broadcast game state to <em>all</em> clients, triggered by "userLogin" and "disconnect" events.</td>
+      <td>
+        Update local state.<br><br>
+        Update UI for Gist link, highlighted player names, timer, current turn, and next turn.<br><br>        
+      </td>
+    </tr>
+    <tr>
+      <td>turnChange</td>
+      <td>When the server's timer is up, pass control to the next player.</td>
+      <td>Broadcast turn data to <em>all</em> clients when the timer is up.</td>
+      <td>        
+          Add user info to playerList.<br><br>
+          Fork/edit the Gist, which may broadcast "newGistLink" and update Gist UI if needed.<br><br>
+          Update local state.<br><br>
+          Toggle editor read-only mode.<br><br>
+          Update UI for highlighted player names, timer, current turn, and next turn.<br><br>        
+      </td>
+    </tr>
+    <tr>
+      <td>createNewGist</td>
+      <td>When the game begins, create a new Gist on behalf of the first player.</td>
+      <td>Broadcast event to first player once logged in, if starting a new game.</td>
+      <td>        
+          Create a Gist for the current user.<br><br>
+          Broadcast "newGistLink" to server.<br><br>
+          Update Gist UI.       
+      </td>        
+    </tr>
+    <tr>
+      <td>newGistLink</td>
+      <td>When a new Gist is created or forked, sync up clients to display the new link.</td>
+      <td>Update game state and broadcast "newGistLink" to all other clients.</td>
+      <td>Update local state and update Gist UI.</td>
+    </tr>
+    <tr>
+      <td>Ace Editor: change</td>
+      <td>When a user types in the editor</td>
+      <td><em>Not used</em></td>
+      <td>
+        Update editor view with new content.<br><br>
+        Send "editorTextChange" event with data to server.
+      </td>
+    </tr>
+    <tr>
+      <td>Ace Editor: changeCursor</td>
+      <td>When a user moves the editor cursor</td>
+      <td><em>Not used</em></td>
+      <td>
+        Update cursor in editor view.<br><br>
+        Send "editorCursorChange" event with data to server.
+      </td>
+    </tr>
+    <tr>
+      <td>Ace Editor: changeScrollLeft and changeScrollTop</td>
+      <td>When a user scrolls in the editor</td>
+      <td><em>Not used</em></td>
+      <td>
+        Update scroll position in editor view.<br><br>
+        Send "editorScrollChange" event with data to server.
+      </td>
+    </tr>
+    <tr>
+      <td>editorTextChange</td>
+      <td>When a user types in the editor, sync the content across all clients.</td>
+      <td>        
+          Update local state.<br><br>
+          Verify that the data was sent from the current user -- to prevent cheating!<br><br>
+          Broadcast "editorTextChange" with updated content to all other clients.<br><br>        
+      </td>
+      <td>Update editor view with new content.</td>
+    </tr>
+    <tr>
+      <td>editorCursorChange</td>
+      <td>When a user moves the editor cursor, sync across all clients.</td>
+      <td>        
+          Update local state.<br><br>
+          Verify that the data was sent from the current user -- to prevent cheating!<br><br>
+          Broadcast "editorCursorChange" with updated content to all other clients.<br><br>        
+      </td>
+      <td>Update cursor in editor view.</td>
+    </tr>
+    <tr>
+      <td>editorScrollChange</td>
+      <td>When a user scrolls in the editor, sync across all clients.</td>
+      <td>        
+          Update local state.<br><br>
+          Verify that the data was sent from the current user -- to prevent cheating!<br><br>
+          Broadcast "editorScrollChange" with updated content to all other clients.<br><br>        
+      </td>
+      <td>Update scroll position in editor view.</td>
+    </tr>
+  </tbody>
+</table>
 
 ## Project Log
 
@@ -152,3 +308,29 @@ A mob programming web app for real-time collaboration at in-person events. The g
 **Milestones:**
 
 - Fixed the bug where any code written in the delay between forking and editing a gist gets attributed to the wrong player.
+
+### 2017-04-13
+
+**Today's daily learning blog post: https://learningnerd.com/2017/04/13/**
+
+**Milestones:**
+
+- Fixed the bug where any code written in the delay between forking and editing a gist gets attributed to the wrong player.
+
+### 2017-06-21
+
+**Today's daily learning blog post: https://learningnerd.com/2017/06/21/**
+
+**Milestones:**
+
+- Moved some notes from this README into separate blog posts, added Table of Contents to README.
+- Fixed setup script so that it no longer overwrites the `.env` file if it already exists.
+
+### 2017-06-27
+
+**Today's daily learning blog post: https://learningnerd.com/2017/06/27/**
+
+**Milestones:**
+
+- Finally posted [a bunch of issues](https://github.com/LearnTeachCode/mob-coding/issues) for next refactoring tasks, bugs, and feature ideas.
+- Started refactoring and closed issue #1.
