@@ -66,12 +66,12 @@ server.listen(port, function() {
 
 /* ------------------------------------------------------------
 	EVENT NAMES: 		SERVER FUNCTIONS:			
-	- loggedIn			io.emit: playerListChange
-						socket.emit: editorChange, changeScroll, changeCursor, turnChange
+	- userLogin			io.emit: playerListChange
+						socket.emit: editorTextChange, editorScrollChange, editorCursorChange, turnChange
 	- disconnect 		Broadcast: playerListChange
-	- editorChange		Broadcast: editorChange
-	- changeCursor		Broadcast: changeCursor
-	- changeScroll		Broadcast: changeScroll
+	- editorTextChange		Broadcast: editorTextChange
+	- editorCursorChange		Broadcast: editorCursorChange
+	- editorScrollChange		Broadcast: editorScrollChange
 	- updateState		Broadcast: updateState
 	- turnChange 		Broadcast: turnChange
 	- createNewGist		Broadcast: createNewGist
@@ -102,7 +102,7 @@ io.on('connection', function (socket) {
 	//console.log('\t\t playerList.length: ' + playerList.length);
 
 	// When a user logs in,
-	socket.on('loggedIn', function (userData) {
+	socket.on('userLogin', function (userData) {
 		console.log('\n* * * * # # # #  User logged in!  # # # # * * * * *');
 		console.log('\t\t > > > ' + userData.login + ' < < <\n');
 		//console.log('\t\t playerList.length: ' + playerList.length);
@@ -114,12 +114,12 @@ io.on('connection', function (socket) {
 		playerList.push(socket.id);
 
 		// Send current state of the text editor to the new client, to initialize!
-		socket.emit('editorChange', editorContent);
+		socket.emit('editorTextChange', editorContent);
 		if (editorScroll != null) {
-			socket.emit('changeScroll', editorScroll);
+			socket.emit('editorScrollChange', editorScroll);
 		}
 		if (editorCursorAndSelection != null) {
-			socket.emit('changeCursor', editorCursorAndSelection);
+			socket.emit('editorCursorChange', editorCursorAndSelection);
 		}
 
 		// Initialize the turn (and timer) with first connected user
@@ -137,7 +137,7 @@ io.on('connection', function (socket) {
 		// Broadcast updated playerList to ALL clients
 		io.emit('playerListChange', playerData);
 
-		console.log('\non("loggedIn") -- turnData broadcasted!\n');
+		console.log('\non("userLogin") -- turnData broadcasted!\n');
 		//console.log( getTurnData() );
 
 		//console.log(' ! ! !   ! ! !   player data and list   ! ! !    ! ! !');
@@ -204,10 +204,10 @@ io.on('connection', function (socket) {
 		}		
 	});
 
-	// When "editorChange" event received, update editor state and broadcast it back out
-	socket.on('editorChange', function (data) {
+	// When "editorTextChange" event received, update editor state and broadcast it back out
+	socket.on('editorTextChange', function (data) {
 		
-		//console.log('editorChange event received!');
+		//console.log('editorTextChange event received!');
 		//console.log(data);
 
 		// Double check that this user is allowed to type (in case of client-side tampering with the JS!)
@@ -216,17 +216,17 @@ io.on('connection', function (socket) {
 			editorContent = data;
 
 			// Broadcast updated editor content to other clients
-			socket.broadcast.emit('editorChange', editorContent);
+			socket.broadcast.emit('editorTextChange', editorContent);
 
 			//console.log('Broadcasting editorContent to other clients!');
 		}
 		
 	});
 
-	// When "changeCursor" event received, update editor state and broadcast it back out
-	socket.on('changeCursor', function (data) {
+	// When "editorCursorChange" event received, update editor state and broadcast it back out
+	socket.on('editorCursorChange', function (data) {
 		
-		//console.log('changeCursor event received!');
+		//console.log('editorCursorChange event received!');
 		//console.log(data);
 
 		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
@@ -235,17 +235,17 @@ io.on('connection', function (socket) {
 			editorCursorAndSelection = data;
 
 			// Broadcast data to other clients
-			socket.broadcast.emit('changeCursor', editorCursorAndSelection);
+			socket.broadcast.emit('editorCursorChange', editorCursorAndSelection);
 
-			//console.log('Broadcasting changeCursor to other clients!');
+			//console.log('Broadcasting editorCursorChange to other clients!');
 		}
 		
 	});
 
-	// When "changeScroll" event received, update editor state and broadcast it back out
-	socket.on('changeScroll', function (data) {
+	// When "editorScrollChange" event received, update editor state and broadcast it back out
+	socket.on('editorScrollChange', function (data) {
 		
-		//console.log('changeScroll event received!');
+		//console.log('editorScrollChange event received!');
 		//console.log(data);
 
 		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
@@ -254,9 +254,9 @@ io.on('connection', function (socket) {
 			editorScroll = data;
 
 			// Broadcast data to other clients
-			socket.broadcast.emit('changeScroll', editorScroll);
+			socket.broadcast.emit('editorScrollChange', editorScroll);
 
-			//console.log('Broadcasting changeScroll to other clients!');
+			//console.log('Broadcasting editorScrollChange to other clients!');
 		}
 		
 	});
