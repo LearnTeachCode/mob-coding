@@ -103,7 +103,7 @@ editor.getSession().setMode('ace/mode/javascript');
 							Send: 		(sent after creating or forking)	
 -------------------------------------------------------------- */
 editor.getSession().on('change', handleLocalEditorTextChange);
-editor.getSession().selection.on('editorCursorChange', handleLocalEditorCursorChange);
+editor.getSession().selection.on('changeCursor', handleLocalEditorCursorChange);
 editor.getSession().on('changeScrollLeft', handleLocalEditorScrollChange);
 editor.getSession().on('changeScrollTop', handleLocalEditorScrollChange);
 
