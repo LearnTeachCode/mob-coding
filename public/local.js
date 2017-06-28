@@ -92,21 +92,21 @@ editor.getSession().setMode('ace/mode/javascript');
 	- connection 		Send: 		SocketIO built-in event
 	- disconnect 		Send: 		SocketIO built-in event
 	- loggedIn			Send: 		handleUserLogin
-	- editorChange		Send: 		handleUserTyping
+	- editorTextChange		Send: 		handleUserTyping
 						Receive: 	handleEditorChange
 	- playerListChange 	Receive: 	handlePlayerListChange
 	- updateState		Receive: 	handleUpdateState
 	- turnChange 		Receive: 	handleTurnChange
-	- changeCursor		Send: 		handleChangeCursor
+	- editorCursorChange		Send: 		handleChangeCursor
 						Receive: 	handleNewCursorData
-	- changeScroll 		Send: 		handleChangeScroll
+	- editorScrollChange 		Send: 		handleeditorScrollChange
 						Receive: 	handleNewScrollData
 	- createNewGist 	Receive: 	createNewGist
 	- newGistLink		Receive: 	handleNewGistLink
 						Send: 		(sent after creating or forking)	
 -------------------------------------------------------------- */
 editor.getSession().on('change', handleUserTyping);
-editor.getSession().selection.on('changeCursor', handleChangeCursor);
+editor.getSession().selection.on('editorCursorChange', handleChangeCursor);
 editor.getSession().on('changeScrollLeft', handleChangeScroll);
 editor.getSession().on('changeScrollTop', handleChangeScroll);
 
@@ -149,7 +149,7 @@ function handleUserTyping (event) {
 	if (socket.id === currentPlayerId) {
 		//console.log('Sending data to server!')
 		// Send data to server
-		socket.emit( 'editorChange', editor.getValue() );
+		socket.emit( 'editorTextChange', editor.getValue() );
 	}
 }
 
@@ -177,7 +177,7 @@ function handleUserNameChange (event) {
 
 // Send cursor and selection data to server
 function handleChangeCursor (event) {
-	//console.log('changeCursor fired!');
+	//console.log('editorCursorChange fired!');
 	//console.log('%c ' + event, 'color: green; font-weight: bold;');	
 
 	// Cursor object:
@@ -187,16 +187,16 @@ function handleChangeCursor (event) {
 	// { end: {column, row}, start: {column, row} }
 
 	// Send to server:
-	socket.emit( 'changeCursor', { cursor: editor.getSession().selection.getCursor(), range: editor.getSession().selection.getRange() } );
+	socket.emit( 'editorCursorChange', { cursor: editor.getSession().selection.getCursor(), range: editor.getSession().selection.getRange() } );
 }
 
 // Send scroll data to server
 function handleChangeScroll (event) {
-	//console.log('changeScroll (left or top) fired!');
+	//console.log('editorScrollChange (left or top) fired!');
 	//console.log('%c scrollLeft: ' + editor.getSession().getScrollLeft() + ', scrollTop: ' + editor.getSession().getScrollTop(), 'color: green; font-weight: bold;');
 
 	// Send to server:
-	socket.emit('changeScroll', { scrollLeft: editor.getSession().getScrollLeft(), scrollTop: editor.getSession().getScrollTop() });	
+	socket.emit('editorScrollChange', { scrollLeft: editor.getSession().getScrollLeft(), scrollTop: editor.getSession().getScrollTop() });	
 }
 
 // TODO: Test 'input' event some more in different browsers!
@@ -205,9 +205,9 @@ function handleChangeScroll (event) {
 /* -------------------------------------------------
 	EVENT LISTENERS / RECEIVE DATA FROM SERVER	
 ---------------------------------------------------- */
-socket.on('editorChange', handleEditorChange);
-socket.on('changeCursor', handleNewCursorData);
-socket.on('changeScroll', handleNewScrollData);
+socket.on('editorTextChange', handleEditorChange);
+socket.on('editorCursorChange', handleNewCursorData);
+socket.on('editorScrollChange', handleNewScrollData);
 socket.on('playerListChange', handlePlayerListChange);
 socket.on('updateState', handleUpdateState);
 socket.on('turnChange', handleTurnChange);
@@ -216,7 +216,7 @@ socket.on('newGistLink', handleNewGistLink);
 
 // When receiving new editorInputView data from server
 function handleEditorChange (data) {
-	//console.log('editorChange event received!');
+	//console.log('editorTextChange event received!');
 	//console.log('%c ' + data, 'color: blue; font-weight: bold;');
 
 	updateEditorView(data);
@@ -234,7 +234,7 @@ function handleNewCursorData (data) {
 
 // When receiving new scroll data from server
 function handleNewScrollData (data) {
-	//console.log('%c scrollChange event received!', 'color: blue; font-weight: bold;');
+	//console.log('%c editorScrollChange event received!', 'color: blue; font-weight: bold;');
 	//console.dir(data); 
 
 	// Set Ace editor's scroll position to match
