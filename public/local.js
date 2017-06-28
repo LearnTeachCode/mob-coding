@@ -88,27 +88,27 @@ editor.getSession().setMode('ace/mode/javascript');
 /* ------------------------------------------------------------
 	EVENT LISTENERS	/ SEND DATA TO SERVER
 
-	EVENT NAMES: 		CLIENT FUNCTIONS:
-	- connection 		Send: 		SocketIO built-in event
-	- disconnect 		Send: 		SocketIO built-in event
-	- loggedIn			Send: 		handleUserLogin
-	- editorTextChange		Send: 		handleUserTyping
-						Receive: 	handleEditorChange
-	- playerListChange 	Receive: 	handlePlayerListChange
-	- updateState		Receive: 	handleUpdateState
-	- turnChange 		Receive: 	handleTurnChange
-	- editorCursorChange		Send: 		handleChangeCursor
-						Receive: 	handleNewCursorData
-	- editorScrollChange 		Send: 		handleeditorScrollChange
-						Receive: 	handleNewScrollData
-	- createNewGist 	Receive: 	createNewGist
-	- newGistLink		Receive: 	handleNewGistLink
-						Send: 		(sent after creating or forking)	
+	EVENT NAMES: 			CLIENT FUNCTIONS:
+	- connection 			Send: 		SocketIO built-in event
+	- disconnect 			Send: 		SocketIO built-in event
+	- loggedIn				Send: 		handleUserLogin
+	- editorTextChange		Send: 		handleLocalEditorTextChange
+							Receive: 	handleServerEditorTextChange
+	- playerListChange 		Receive: 	handlePlayerListChange
+	- updateState			Receive: 	handleUpdateState
+	- turnChange 			Receive: 	handleTurnChange
+	- editorCursorChange		Send: 	handleLocalEditorCursorChange
+							Receive: 	handleServerEditorCursorChange
+	- editorScrollChange 		Send: 	handleLocalEditorScrollChange
+							Receive: 	handleServerEditorScrollChange
+	- createNewGist 		Receive: 	createNewGist
+	- newGistLink			Receive: 	handleNewGistLink
+							Send: 		(sent after creating or forking)	
 -------------------------------------------------------------- */
-editor.getSession().on('change', handleUserTyping);
-editor.getSession().selection.on('editorCursorChange', handleChangeCursor);
-editor.getSession().on('changeScrollLeft', handleChangeScroll);
-editor.getSession().on('changeScrollTop', handleChangeScroll);
+editor.getSession().on('change', handleLocalEditorTextChange);
+editor.getSession().selection.on('editorCursorChange', handleLocalEditorCursorChange);
+editor.getSession().on('changeScrollLeft', handleLocalEditorScrollChange);
+editor.getSession().on('changeScrollTop', handleLocalEditorScrollChange);
 
 // When client connects to server,
 socket.on('connect', function(){	
@@ -139,8 +139,8 @@ function handleUserLogin (userData) {
 }
 
 // Send editorInputView data to server
-function handleUserTyping (event) {
-	//console.log('handleUserTyping event! value: ');
+function handleLocalEditorTextChange (event) {
+	//console.log('handleLocalEditorTextChange event! value: ');
 	//console.log(event);
 
 	//console.log('%c ' + editor.getValue(), 'color: green; font-weight: bold;');
@@ -176,7 +176,7 @@ function handleUserNameChange (event) {
 }
 
 // Send cursor and selection data to server
-function handleChangeCursor (event) {
+function handleLocalEditorCursorChange (event) {
 	//console.log('editorCursorChange fired!');
 	//console.log('%c ' + event, 'color: green; font-weight: bold;');	
 
@@ -191,7 +191,7 @@ function handleChangeCursor (event) {
 }
 
 // Send scroll data to server
-function handleChangeScroll (event) {
+function handleLocalEditorScrollChange (event) {
 	//console.log('editorScrollChange (left or top) fired!');
 	//console.log('%c scrollLeft: ' + editor.getSession().getScrollLeft() + ', scrollTop: ' + editor.getSession().getScrollTop(), 'color: green; font-weight: bold;');
 
@@ -205,9 +205,9 @@ function handleChangeScroll (event) {
 /* -------------------------------------------------
 	EVENT LISTENERS / RECEIVE DATA FROM SERVER	
 ---------------------------------------------------- */
-socket.on('editorTextChange', handleEditorChange);
-socket.on('editorCursorChange', handleNewCursorData);
-socket.on('editorScrollChange', handleNewScrollData);
+socket.on('editorTextChange', handleServerEditorTextChange);
+socket.on('editorCursorChange', handleServerEditorCursorChange);
+socket.on('editorScrollChange', handleServerEditorScrollChange);
 socket.on('playerListChange', handlePlayerListChange);
 socket.on('updateState', handleUpdateState);
 socket.on('turnChange', handleTurnChange);
@@ -215,7 +215,7 @@ socket.on('createNewGist', createNewGist);
 socket.on('newGistLink', handleNewGistLink);
 
 // When receiving new editorInputView data from server
-function handleEditorChange (data) {
+function handleServerEditorTextChange (data) {
 	//console.log('editorTextChange event received!');
 	//console.log('%c ' + data, 'color: blue; font-weight: bold;');
 
@@ -223,7 +223,7 @@ function handleEditorChange (data) {
 }
 
 // When receiving new cursor/selection data from server
-function handleNewCursorData (data) {
+function handleServerEditorCursorChange (data) {
 	//console.log('%c cursorChange event received!', 'color: blue; font-weight: bold;');
 	//console.dir(data);
 
@@ -233,7 +233,7 @@ function handleNewCursorData (data) {
 }
 
 // When receiving new scroll data from server
-function handleNewScrollData (data) {
+function handleServerEditorScrollChange (data) {
 	//console.log('%c editorScrollChange event received!', 'color: blue; font-weight: bold;');
 	//console.dir(data); 
 
