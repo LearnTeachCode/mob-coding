@@ -333,4 +333,4 @@ A mob programming web app for real-time collaboration at in-person events. The g
 **Milestones:**
 
 - Finally posted [a bunch of issues](https://github.com/LearnTeachCode/mob-coding/issues) for next refactoring tasks, bugs, and feature ideas.
-- Started refactoring and closed issue #1.
+- Started refactoring and closed [issue #1](https://github.com/LearnTeachCode/mob-coding/issues/1).
