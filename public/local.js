@@ -12,9 +12,6 @@ var currentGist;
 // Meant to be temporary:
 var currentAccessToken;
 
-// Quick fix to check for first turn, for first gist edit
-var gistNewlyCreated;
-
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
 	- loginmodal		container for login screen
@@ -294,21 +291,20 @@ function handleTurnChange (turnData) {
 	currentPlayerId = turnData.current.id;
 	nextPlayerId = turnData.next.id;
 
-	// If user's turn is ending, fork and/or edit the gist before passing control to next player!	
-	if (socket.id === previousPlayerId) {
+	// If user's turn is ending and a Gist exists, fork and/or edit the gist before passing control to next player!	
+	if (socket.id === previousPlayerId && turnData.gist != null) {
 		console.log("User's turn is about to end.");
 
-		// If a gist has been created, AND it's been edited at least once (first game round ended),
-		// AND if the current player is about to change (and the user is the previous player),
-		if (turnData.gist != null && !gistNewlyCreated && currentPlayerId !== previousPlayerId) {
+		// If the current player is about to change,
+		if (currentPlayerId !== previousPlayerId) {
 			
 			//console.log("handleTurnChange: now forking and editing gist " + turnData.gist.id);
 
 			// fork and edit the current gist on behalf of previous player and send new ID to server
 			forkAndEditGist(turnData.gist.id, editor.getValue());
 		
-		// Otherwise, JUST EDIT the current gist (if one exists) on behalf of previous player and send new ID to server
-		} else if (turnData.gist != null) {
+		// Otherwise, JUST EDIT the current gist on behalf of previous player and send new ID to server
+		} else {
 		
 			//console.log("handleTurnChange: now editing gist " + turnData.gist.id);	
 			editGist(turnData.gist.id, editor.getValue());
@@ -536,9 +532,6 @@ function createNewGist() {
 	// use currentAccessToken	
 	// use https://developer.github.com/v3/gists/#create-a-gist
 
-	// Quick fix for editing gist on first turn
-	gistNewlyCreated = true;	
-
 	var gistObject = {
 	  "description": "A saved mob programming session with Learn Teach Code!",
 	  "public": true,
@@ -588,8 +581,6 @@ function editGist(gistId, codeEditorContent) {
 		console.log('editGist: response received at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
 		console.dir(gistObject);
 
-		// Quick fix for editing gist on first turn
-		gistNewlyCreated = false;
 	}, handleError);
 
 }
