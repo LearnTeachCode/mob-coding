@@ -66,7 +66,7 @@ server.listen(port, function() {
 
 /* ------------------------------------------------------------
 	EVENT NAMES: 		SERVER FUNCTIONS:			
-	- loggedIn			io.emit: playerListChange
+	- userLogin			io.emit: playerListChange
 						socket.emit: editorTextChange, editorScrollChange, editorCursorChange, turnChange
 	- disconnect 		Broadcast: playerListChange
 	- editorTextChange		Broadcast: editorTextChange
@@ -102,7 +102,7 @@ io.on('connection', function (socket) {
 	//console.log('\t\t playerList.length: ' + playerList.length);
 
 	// When a user logs in,
-	socket.on('loggedIn', function (userData) {
+	socket.on('userLogin', function (userData) {
 		console.log('\n* * * * # # # #  User logged in!  # # # # * * * * *');
 		console.log('\t\t > > > ' + userData.login + ' < < <\n');
 		//console.log('\t\t playerList.length: ' + playerList.length);
@@ -137,7 +137,7 @@ io.on('connection', function (socket) {
 		// Broadcast updated playerList to ALL clients
 		io.emit('playerListChange', playerData);
 
-		console.log('\non("loggedIn") -- turnData broadcasted!\n');
+		console.log('\non("userLogin") -- turnData broadcasted!\n');
 		//console.log( getTurnData() );
 
 		//console.log(' ! ! !   ! ! !   player data and list   ! ! !    ! ! !');

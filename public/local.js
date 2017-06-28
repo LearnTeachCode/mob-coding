@@ -91,7 +91,7 @@ editor.getSession().setMode('ace/mode/javascript');
 	EVENT NAMES: 			CLIENT FUNCTIONS:
 	- connection 			Send: 		SocketIO built-in event
 	- disconnect 			Send: 		SocketIO built-in event
-	- loggedIn				Send: 		handleUserLogin
+	- userLogin				Send: 		handleUserLogin
 	- editorTextChange		Send: 		handleLocalEditorTextChange
 							Receive: 	handleServerEditorTextChange
 	- playerListChange 		Receive: 	handlePlayerListChange
@@ -101,7 +101,7 @@ editor.getSession().setMode('ace/mode/javascript');
 							Receive: 	handleServerEditorCursorChange
 	- editorScrollChange 		Send: 	handleLocalEditorScrollChange
 							Receive: 	handleServerEditorScrollChange
-	- createNewGist 		Receive: 	createNewGist
+	- createNewGist 		Receive: 	handleCreateNewGist
 	- newGistLink			Receive: 	handleNewGistLink
 							Send: 		(sent after creating or forking)	
 -------------------------------------------------------------- */
@@ -135,7 +135,7 @@ function handleUserLogin (userData) {
 	updateLoggedInView(userData.login, userData.avatar_url);
 
 	// Notify server that user logged in
-	socket.emit('loggedIn', {login: userData.login, avatar_url: userData.avatar_url});
+	socket.emit('userLogin', {login: userData.login, avatar_url: userData.avatar_url});
 }
 
 // Send editorInputView data to server
@@ -211,7 +211,7 @@ socket.on('editorScrollChange', handleServerEditorScrollChange);
 socket.on('playerListChange', handlePlayerListChange);
 socket.on('updateState', handleUpdateState);
 socket.on('turnChange', handleTurnChange);
-socket.on('createNewGist', createNewGist);
+socket.on('createNewGist', handleCreateNewGist);
 socket.on('newGistLink', handleNewGistLink);
 
 // When receiving new editorInputView data from server
@@ -531,8 +531,8 @@ function updateCurrentGistView (gistData) {
 	GITHUB API FUNCTIONS
 ---------------------------------------------------- */
 // Make a POST request via AJAX to create a Gist for the current user
-function createNewGist() {
-	console.log('called createNewGist at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
+function handleCreateNewGist() {
+	console.log('called handleCreateNewGist at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
 	// use currentAccessToken	
 	// use https://developer.github.com/v3/gists/#create-a-gist
 
@@ -551,7 +551,7 @@ function createNewGist() {
 
 	postWithGitHubToken('https://api.github.com/gists', gistObject).then(function(responseText){
 		//console.log(responseText);
-		console.log('createNewGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
+		console.log('handleCreateNewGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
 		console.dir(gistObject);
 
 		var gistObject = JSON.parse(responseText);
