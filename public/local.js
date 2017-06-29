@@ -6,9 +6,10 @@ var socket = io();
 
 // SAVING LOCAL STATE -- GLOBAL VARS (ugh) 
 var currentPlayerId;
+var userName;
 var nextPlayerId;
 var animationId;
-var currentGist;
+var currentGist; // gistData: {id, url, owner}
 // Meant to be temporary:
 var currentAccessToken;
 
@@ -127,6 +128,9 @@ socket.on('disconnect', function(){
 function handleUserLogin (userData) {
 	console.log('**************** Logged in! GitHub User Data: *********************');
 	console.log(userData);	
+
+	// Save user's GitHub name to local game state
+	userName = userData.login;
 
 	// Update views with user's GitHub name and avatar
 	updateLoggedInView(userData.login, userData.avatar_url);
@@ -295,15 +299,15 @@ function handleTurnChange (turnData) {
 	if (socket.id === previousPlayerId && turnData.gist != null) {
 		console.log("User's turn is about to end.");
 
-		// If the current player is about to change,
-		if (currentPlayerId !== previousPlayerId) {
+		// If the current player does NOT own the current Gist,
+		if (userName !== turnData.gist.owner) {
 			
 			//console.log("handleTurnChange: now forking and editing gist " + turnData.gist.id);
 
-			// fork and edit the current gist on behalf of previous player and send new ID to server
+			// Fork/edit current Gist on behalf of player whose turn is about to end, and send new ID to server
 			forkAndEditGist(turnData.gist.id, editor.getValue());
 		
-		// Otherwise, JUST EDIT the current gist on behalf of previous player and send new ID to server
+		// Otherwise, JUST EDIT the current Gist and send new ID to server
 		} else {
 		
 			//console.log("handleTurnChange: now editing gist " + turnData.gist.id);	
@@ -550,12 +554,12 @@ function handleCreateNewGist() {
 		console.dir(gistObject);
 		
 		// Save new gist ID and URL locally
-		currentGist = {id: gistObject.id, url: gistObject.html_url};
+		currentGist = {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login};
 
 		// Send new gist data to server
-		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url});
+		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
-		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url});
+		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
 	}, handleError);
 
@@ -602,12 +606,12 @@ function forkAndEditGist(gistId, codeEditorContent) {
 		console.dir(gistObject);
 
 		// Send new gist data to server
-		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url});
+		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
 		// Then edit the new gist:
 		editGist(gistObject.id, codeEditorContent);
 
-		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url});
+		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
 	}, handleError);
 
