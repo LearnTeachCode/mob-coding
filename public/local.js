@@ -6,6 +6,7 @@ var socket = io();
 
 // SAVING LOCAL STATE -- GLOBAL VARS (ugh) 
 var currentPlayerId;
+var userName;
 var nextPlayerId;
 var animationId;
 var currentGist; // gistData: {id, url, owner}
@@ -127,6 +128,9 @@ socket.on('disconnect', function(){
 function handleUserLogin (userData) {
 	console.log('**************** Logged in! GitHub User Data: *********************');
 	console.log(userData);	
+
+	// Save user's GitHub name to local game state
+	userName = userData.login;
 
 	// Update views with user's GitHub name and avatar
 	updateLoggedInView(userData.login, userData.avatar_url);
