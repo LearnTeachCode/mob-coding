@@ -299,15 +299,15 @@ function handleTurnChange (turnData) {
 	if (socket.id === previousPlayerId && turnData.gist != null) {
 		console.log("User's turn is about to end.");
 
-		// If the current player is about to change,
-		if (currentPlayerId !== previousPlayerId) {
+		// If the current player does NOT own the current Gist,
+		if (userName !== turnData.gist.owner) {
 			
 			//console.log("handleTurnChange: now forking and editing gist " + turnData.gist.id);
 
-			// fork and edit the current gist on behalf of previous player and send new ID to server
+			// Fork/edit current Gist on behalf of player whose turn is about to end, and send new ID to server
 			forkAndEditGist(turnData.gist.id, editor.getValue());
 		
-		// Otherwise, JUST EDIT the current gist on behalf of previous player and send new ID to server
+		// Otherwise, JUST EDIT the current Gist and send new ID to server
 		} else {
 		
 			//console.log("handleTurnChange: now editing gist " + turnData.gist.id);	
