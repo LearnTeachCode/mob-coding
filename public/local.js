@@ -8,7 +8,7 @@ var socket = io();
 var currentPlayerId;
 var nextPlayerId;
 var animationId;
-var currentGist;
+var currentGist; // gistData: {id, url, owner}
 // Meant to be temporary:
 var currentAccessToken;
 
@@ -550,12 +550,12 @@ function handleCreateNewGist() {
 		console.dir(gistObject);
 		
 		// Save new gist ID and URL locally
-		currentGist = {id: gistObject.id, url: gistObject.html_url};
+		currentGist = {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login};
 
 		// Send new gist data to server
-		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url});
+		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
-		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url});
+		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
 	}, handleError);
 
@@ -602,12 +602,12 @@ function forkAndEditGist(gistId, codeEditorContent) {
 		console.dir(gistObject);
 
 		// Send new gist data to server
-		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url});
+		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
 		// Then edit the new gist:
 		editGist(gistObject.id, codeEditorContent);
 
-		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url});
+		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
 	}, handleError);
 
