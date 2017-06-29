@@ -93,6 +93,7 @@ var currentGist;
 var timerId;
 var nextTurnChangeTimestamp;
 var currentPlayerIndex;
+var previousPlayerIndex;
 const turnDuration = 60000;	// 3 min: 180000
 
 // When a user connects over websocket,
@@ -285,18 +286,31 @@ function changeTurn(socketId) {
 	if (currentPlayerIndex == null) {
 		console.log('\nINITIALIZING FIRST PLAYER\n');
 		currentPlayerIndex = playerList.indexOf(socketId);
+
+		// Initialize previousPlayer to match currentPlayer for first turn!
+		previousPlayerIndex = currentPlayerIndex;
+
 		//console.log('currentPlayerIndex: ' + currentPlayerIndex);
-	// Otherwise, increment the current player
+
+	// Otherwise, increment the previous and current player
 	} else {	  			
 		//console.log('\nIncrementing currentPlayerIndex\n');
+
+		previousPlayerIndex = currentPlayerIndex;
 		currentPlayerIndex = (currentPlayerIndex + 1) % playerList.length;
-		//console.log('NEW currentPlayerIndex: ' + currentPlayerIndex);
+		console.log('NEW currentPlayerIndex: ' + currentPlayerIndex + ' \n\t NEW previousPlayerIndex : ' + previousPlayerIndex + '\n>>>>>>\n');
+		console.log(playerList);
 	}
 }
 
 // Returns turnChange object for the current turn
 function getTurnData() {
 	//console.log('getTurnData called');
+	var previousPlayerId = playerList[previousPlayerIndex];
+console.log("getTurnData() >>>>>>>>  previousPlayerId: " + previousPlayerId + '\n');
+console.log('\n>>>>>>\n');
+console.log(playerList);
+
 	var currentPlayerId = playerList[currentPlayerIndex];
 	var currentPlayerName = playerData[currentPlayerId].login;
 	
@@ -305,7 +319,7 @@ function getTurnData() {
 	var nextPlayerId = playerList[nextPlayerIndex];
 	var nextPlayerName = playerData[nextPlayerId].login;	
 
-	return {millisRemaining: nextTurnChangeTimestamp - Date.now(), current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}, gist: currentGist};
+	return {millisRemaining: nextTurnChangeTimestamp - Date.now(), previous: {id: previousPlayerId}, current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}, gist: currentGist};
 }
 
 // Initializes the turn and turn timer, returns timerId
