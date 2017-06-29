@@ -5,6 +5,7 @@ var socket = io();
 
 
 // SAVING LOCAL STATE -- GLOBAL VARS (ugh) 
+var previousPlayerId;
 var currentPlayerId;
 var nextPlayerId;
 var animationId;
@@ -284,20 +285,18 @@ function handleTurnChange (turnData) {
 	// Remove highlight from previous current player's name in playerListView
 	togglePlayerHighlight(false);
 
-	// Temporarily save the previous player ID for later comparison
-	var previousPlayerId = currentPlayerId;
+//console.log("********* ****  handleTurnChange FIRST  *** ********");
+//console.log("previousPlayerId: " + previousPlayerId + "\n\tcurrentPlayerId: "+  currentPlayerId + "\n\tnextPlayerId: " + nextPlayerId, );
 
-	// Update local state
-	currentPlayerId = turnData.current.id;
-	nextPlayerId = turnData.next.id;
-
-	// If user's turn is ending and a Gist exists, fork and/or edit the gist before passing control to next player!	
-	if (socket.id === previousPlayerId && turnData.gist != null) {
+	// If current user's turn is ending and a Gist exists, fork and/or edit the gist before passing control to next player!	
+	if (socket.id === currentPlayerId && turnData.gist != null) {
 		console.log("User's turn is about to end.");
 
 		// If the current player is about to change,
 		if (currentPlayerId !== previousPlayerId) {
 			
+			console.log("> > > >  > > currentPlayerId != previousPlayerId so fork/edit!");
+			console.log("\t\t prevPlayerId: " + previousPlayerId + ", currPlayerId: " + currentPlayerId);
 			//console.log("handleTurnChange: now forking and editing gist " + turnData.gist.id);
 
 			// fork and edit the current gist on behalf of previous player and send new ID to server
@@ -305,13 +304,26 @@ function handleTurnChange (turnData) {
 		
 		// Otherwise, JUST EDIT the current gist on behalf of previous player and send new ID to server
 		} else {
-		
+			console.log("< < < < <  < currentPlayerId == previousPlayerId so only edit!");
+			console.log("\t\t prevPlayerId: " + previousPlayerId + ", currPlayerId: " + currentPlayerId);
 			//console.log("handleTurnChange: now editing gist " + turnData.gist.id);	
 			editGist(turnData.gist.id, editor.getValue());
 
 		}
 	}
+
+
+
+	// Update local state to reflect completed turn change!
+	previousPlayerId = turnData.previous.id;
+	currentPlayerId = turnData.current.id;
+	nextPlayerId = turnData.next.id;
 	
+
+//console.log("********* ****  handleTurnChange SECOND  *** ********");
+//console.log("previousPlayerId: " + previousPlayerId + "\n\tcurrentPlayerId: "+  currentPlayerId + "\n\tnextPlayerId: " + nextPlayerId, );
+//console.dir(turnData);
+
 	// If user is no longer the current player, prevent them from typing/broadcasting!
 	if (socket.id !== currentPlayerId) {
 		console.log("User's turn is over.");
@@ -342,10 +354,8 @@ function handleUpdateState (turnData) {
 	// Remove highlight from previous current player's name in playerListView
 	togglePlayerHighlight(false);	
 
-	// Temporarily save the previous player ID for later comparison
-	var previousPlayerId = currentPlayerId;
-
-	// Update local state
+	// Update local state	
+	previousPlayerId = turnData.previous.id;
 	currentPlayerId = turnData.current.id;
 	nextPlayerId = turnData.next.id;
 
