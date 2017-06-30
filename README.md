@@ -50,7 +50,7 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 ### Flowchart
 
-![Updated mob coding flowchart](https://learningnerd.com/images/mobcoding-flowchart-2017-06-28.svg)
+![Updated mob coding flowchart](https://learningnerd.com/images/mobcoding-flowchart-2017-06-29.svg)
 
 ### Events List
 
@@ -334,3 +334,27 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 - Finally posted [a bunch of issues](https://github.com/LearnTeachCode/mob-coding/issues) for next refactoring tasks, bugs, and feature ideas.
 - Started refactoring and closed [issue #1](https://github.com/LearnTeachCode/mob-coding/issues/1).
+
+### 2017-06-28
+
+**Today's daily learning blog post: https://learningnerd.com/2017/06/28/**
+
+**Milestones:**
+
+- Finally got the app working again!!! Successful live user test at tonight's web dev study meetup! (The server never crashed!)
+
+- Added updated flowchart and events list to this README for [version 1.0.0 documentation](#version-100-documentation).
+
+- Fixed the main (most obvious) bug, closing [issue #8 ("Error thrown when client calls updateCurrentGistView the first time to create initial Gist")](https://github.com/LearnTeachCode/mob-coding/issues/8)!
+
+- Closed [issue #3 ("Simplify client-side code for determining when to fork/edit Gist")](https://github.com/LearnTeachCode/mob-coding/issues/3), which lead to opening [issue #20 ("Game state should track previous and current player for Gist forking/editing logic")](https://github.com/LearnTeachCode/mob-coding/issues/20), which I closed with [pull request #25](https://github.com/LearnTeachCode/mob-coding/pull/25), which then led to opening [issue #24 ("If current player disconnects, next turn can trigger unwanted Gist fork")](https://github.com/LearnTeachCode/mob-coding/issues/24).
+
+### 2017-06-29
+
+**Today's daily learning blog post: https://learningnerd.com/2017/06/29/**
+
+**Milestones:**
+
+- Realized most of yesterday's work was based on an incorrect assumption, so threw out [pull request #25](https://github.com/LearnTeachCode/mob-coding/pull/25) and replaced  [issue #20](https://github.com/LearnTeachCode/mob-coding/issues/20) and [issue #24](https://github.com/LearnTeachCode/mob-coding/issues/24) with [issue #26 ("Game state should track Gist owner for forking/editing logic")](https://github.com/LearnTeachCode/mob-coding/issues/26) -- a much better solution!
+
+- Closed [issue #26](https://github.com/LearnTeachCode/mob-coding/issues/26), solving that bug once and for all! Updated the flowchart accordingly.
