@@ -169,8 +169,7 @@ io.on('connection', function (socket) {
 				currentPlayerIndex = null;
 				
 				// Turn off the timer
-				clearInterval(timerId);
-				timerId = null;
+				clearInterval(timerId);				
 				nextTurnChangeTimestamp = null;
 			
 			// Otherwise, if there are players left,
@@ -178,9 +177,9 @@ io.on('connection', function (socket) {
 			 	// If the disconnected user was the current player, restart timer and change the turn!
 			 	if (socket.id === currentPlayerId) {
 					console.log('\nCURRENT PLAYER disconnected! Restarting turn/timer.\n');
+					
 					// Turn off the timer
-					clearInterval(timerId);
-					timerId = null;
+					clearInterval(timerId);					
 					nextTurnChangeTimestamp = null;
 
 					// Re-initialize the turn (and timer), passing control to the next user
