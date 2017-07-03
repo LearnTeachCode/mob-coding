@@ -121,10 +121,10 @@ io.on('connection', function (socket) {
 		if (editorCursorAndSelection != null) {
 			socket.emit('editorCursorChange', editorCursorAndSelection);
 		}
-
-		// Initialize the turn (and timer) with first connected user
-		// and create the initial GitHub gist on behlaf of the first user!
-		if (timerId == null) {
+		
+		// If there is 1 player logged in (the first player to join, who just triggered the "userLogin" event),
+		// START THE GAME!!!
+		if (playerList.length === 1) {
 			timerId = startTurnTimer(timerId, turnDuration, socket.id);
 			
 			// Notify the first user to create a new gist now!
@@ -318,7 +318,7 @@ function startTurnTimer(timerId, turnDuration, socketId) {
 	console.log( 'Next turn at: ' + new Date(nextTurnChangeTimestamp).toString().substring(16,25) );	
 
 	// Initialize the turn data using given user ID
-	changeTurn(socketId);		
+	changeTurn(socketId);
 
 	// Every time the timer goes off,
 	timerId = setInterval(() => {	  			  		
