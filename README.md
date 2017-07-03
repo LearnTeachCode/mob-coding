@@ -48,9 +48,15 @@ A mob programming web app for real-time collaboration at in-person events. The g
 
 ## Version 1.0.0 Documentation
 
+### UML state machine diagram
+
+High-level, simplified state chart:
+
+![Mob coding version 1.0.0 state chart](https://learningnerd.com/images/mobcoding-statechart-highlevel-2017-06-30.svg)
+
 ### Flowchart
 
-![Updated mob coding flowchart](https://learningnerd.com/images/mobcoding-flowchart-2017-06-29.svg)
+![Mob coding version 1.0.0 flowchart](https://learningnerd.com/images/mobcoding-flowchart-2017-06-29.svg)
 
 ### Events List
 
@@ -358,3 +364,11 @@ A mob programming web app for real-time collaboration at in-person events. The g
 - Realized most of yesterday's work was based on an incorrect assumption, so threw out [pull request #25](https://github.com/LearnTeachCode/mob-coding/pull/25) and replaced  [issue #20](https://github.com/LearnTeachCode/mob-coding/issues/20) and [issue #24](https://github.com/LearnTeachCode/mob-coding/issues/24) with [issue #26 ("Game state should track Gist owner for forking/editing logic")](https://github.com/LearnTeachCode/mob-coding/issues/26) -- a much better solution!
 
 - Closed [issue #26](https://github.com/LearnTeachCode/mob-coding/issues/26), solving that bug once and for all! Updated the flowchart accordingly.
+
+### 2017-06-30
+
+**Today's daily learning blog post: https://learningnerd.com/2017/06/30/**
+
+**Milestones:**
+
+- Created high-level UML state machine diagram, added to this README for [version 1.0.0 documentation](#version-100-documentation).
