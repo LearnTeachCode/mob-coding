@@ -272,7 +272,7 @@ function handlePlayerJoined (playerData) {
 	gameState.players.push(playerData);
 
 	// Merge the two arrays, reording so current user is at the top (but removed from this list), without modifying the turn order
-	var clientIndex = getPlayerIndexById(socket.id, gameState,players);
+	var clientIndex = getPlayerIndexById(socket.id, gameState.players);
 	var playersTopSegment = gameState.players.slice(clientIndex);
 	var playersBottomSegment = gameState.players.slice(0, clientIndex);
 	var reorderedPlayers = playersTopSegment.concat(playersBottomSegment);
