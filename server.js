@@ -141,7 +141,7 @@ io.on('connection', function (socket) {
 		
 		// If there is 1 player logged in, START THE GAME!!!
 		if (gameState.players.length === 1) {
-			timerId = startTurnTimer(timerId, turnDuration, socket.id);
+			timerId = startTurnTimer(timerId, turnDuration);
 		}
 
 		// Initialize new player
@@ -188,11 +188,11 @@ io.on('connection', function (socket) {
 					gameState.timeRemaining = null;
 
 					// Re-initialize the turn (and timer), passing control to the next user
-					timerId = startTurnTimer(timerId, turnDuration, socket.id);			
+					timerId = startTurnTimer(timerId, turnDuration);			
 				}
 
 				// Broadcast current turn data to update all other clients
-				socket.broadcast.emit( 'updateState', getTurnData() );
+				socket.broadcast.emit( 'updateState', null );
 
 				// Broadcast updated playerList to update all other clients
 				socket.broadcast.emit('playerJoined', playerData);
@@ -279,57 +279,30 @@ io.on('connection', function (socket) {
 /* -------------------------------------------------
 	FUNCTIONS
 ---------------------------------------------------- */
-function changeTurn(socketId) {
-	// If current client is first player, initialize!
-	if (gameState.turnIndex == null) {
-		console.log('\nINITIALIZING FIRST PLAYER\n');
-		// *** REWRITE THIS PART! ***
-
-	// Otherwise, increment the current player
-	} else {
-		gameState.turnIndex = (gameState.turnIndex + 1) % gameState.players.length;
-	}
-}
-
-// Returns turnChange object for the current turn
-function getTurnData() {
-	//console.log('getTurnData called');
-	var currentPlayerId = getCurrentPlayerId();
-	var currentPlayerName = gameState.players[gameState.turnIndex].login;
-	
-	var nextPlayerIndex = (gameState.turnIndex + 1) % gameState.players.length;
-	
-	var nextPlayerId = gameState.players[nextPlayerIndex].id;
-	var nextPlayerName = gameState.players[nextPlayerIndex].login;
-
-	return {timeRemaining: gameState.timeRemaining - Date.now(), current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}, gist: gameState.currentGist};
+function changeTurn() {
+	gameState.turnIndex = (gameState.turnIndex + 1) % gameState.players.length;
+	// Broadcast turnChange to ALL clients
+	io.emit('turnChange', null);
 }
 
 // Initializes the turn and turn timer, returns timerId
-function startTurnTimer(timerId, turnDuration, socketId) {
+function startTurnTimer(timerId, turnDuration) {
 	console.log('\nInitializing turn timer!');
 
-	// Initialize time of next turn change (will use this to sync the clients)
-	gameState.timeRemaining = Date.now() + turnDuration;
+	// Initialize or reset time remaining
+	gameState.timeRemaining = turnDuration;
 
-	console.log( 'Next turn at: ' + new Date(gameState.timeRemaining).toString().substring(16,25) );	
-
-	// Initialize the turn data using given user ID
-	changeTurn(socketId);
+	console.log( 'Next turn at: ' + new Date(Date.now() + gameState.timeRemaining).toString().substring(16,25) );
 
 	// Every time the timer goes off,
-	timerId = setInterval(() => {	  			  		
+	timerId = setInterval(() => {
 		console.log('\n >>>>>>>>>>>  ' + new Date().toString().substring(16,25)	+ ' - Time to change turns!  <<<<<<<<<<\n');
 
 		// Update time of next turn change
-		gameState.timeRemaining = Date.now() + turnDuration;
+		gameState.timeRemaining = turnDuration;
 
-		changeTurn(socketId);
+		changeTurn();
 
-		// Broadcast turnChange with data to ALL clients
-		io.emit( 'turnChange', getTurnData() );
-
-		//console.log( getTurnData() );
 	}, turnDuration); // TO DO: enable user-specified turn length
 
 	return timerId;
