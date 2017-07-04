@@ -290,36 +290,19 @@ function handleGameState (serverGameState) {
 
 // When receiving new player list data from server
 function handlePlayerJoined (playerData) {
-	// Transform the data!!
+	// Add new player
+	gameState.players.push(playerData);
 
-	// Transform into an array to more easily reorder it
-	var playerIdArray = Object.keys(playerData);
+	// Merge the two arrays, reording so current user is at the top (but removed from this list), without modifying the turn order
+	var clientIndex = getPlayerIndexById(socket.id, gameState,players);
+	var playersTopSegment = gameState.players.slice(clientIndex);
+	var playersBottomSegment = gameState.players.slice(0, clientIndex);
+	var reorderedPlayers = playersTopSegment.concat(playersBottomSegment);
 
-	var userIndex = playerIdArray.indexOf(socket.id);
-	var playerListTopSegment = playerIdArray.slice(userIndex+1);
-	var playerListBottomSegment = playerIdArray.slice(0, userIndex);
-
-	// Merge the two arrays, reording so current user is at the top
-	// (but removed from this list), without modifying the turn order
-	playerIdArray = playerListTopSegment.concat(playerListBottomSegment);
-
-	// Generate an array of ids, user logins, and avatar_urls for updating the UI
-	var playerArray = playerIdArray.map(function(id){
-		return {id: id, login: playerData[id].login, avatar_url: playerData[id].avatar_url};
-	});
-	//console.log('playerArray:');
-	//console.log(playerArray);
-
-	// Get names of current and next players based on saved local IDs
-	var currentPlayerName = playerData[getCurrentPlayer().id].login;
-	var nextPlayerName = playerData[nextPlayerId].login;
-
-	//console.log('Updating UI with currentPlayerName: ' + currentPlayerName + ', nextPlayerName: ' + nextPlayerName);
-	
 	// Update the UI
-	updatePlayerListView(playerArray);
-	updateCurrentTurnView(currentPlayerName);
-	updateNextTurnView(nextPlayerName);
+	updatePlayerListView(reorderedPlayers);
+	updateCurrentTurnView(getCurrentPlayer().login);
+	updateNextTurnView(getNextPlayer().login);
 }
 
 // When receiving turnChange event from server
@@ -432,7 +415,7 @@ function togglePlayerHighlight (toggleOn) {
 	}
 }
 
-// Using data from server, update list of players
+// Update list of players
 function updatePlayerListView (playerArray) {	
 	// Delete the contents of playerListView each time
 	while (playerListView.firstChild) {
@@ -454,7 +437,7 @@ function updatePlayerListView (playerArray) {
   		userAvatarElem.classList.add('avatar');
 
 		// If this player is the current player, highlight their name
-		if (player.id === currentPlayerId) {
+		if (player.id === getCurrentPlayer().id) {
 			playerElement.classList.add('highlight');
 		}
 

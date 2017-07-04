@@ -132,12 +132,12 @@ io.on('connection', function (socket) {
 	console.log('\nA user connected! (But not yet logged in.)\n');		
 
 	// When a player logs in,
-	socket.on('playerJoined', function (userData) {
+	socket.on('playerJoined', function (playerData) {
 		console.log('\n* * * * # # # #  User logged in!  # # # # * * * * *');
-		console.log('\t\t > > > ' + userData.login + ' < < <\n');		
+		console.log('\t\t > > > ' + playerData.login + ' < < <\n');		
 
 		// Add new player
-		gameState.players.push({id: socket.id, login: userData.login, avatar_url: userData.avatar_url});
+		gameState.players.push({id: socket.id, login: playerData.login, avatar_url: playerData.avatar_url});
 		
 		// If there is 1 player logged in, START THE GAME!!!
 		if (gameState.players.length === 1) {
@@ -148,7 +148,7 @@ io.on('connection', function (socket) {
 		socket.emit('gameState', gameState);
 
 		// Broadcast new player data to all OTHER clients
-		socket.broadcast.emit('playerJoined', playerData);
+		socket.broadcast.emit('playerJoined', {id: socket.id, login: playerData.login, avatar_url: playerData.avatar_url});
 
 	});
 
