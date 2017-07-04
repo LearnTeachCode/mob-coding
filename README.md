@@ -58,150 +58,44 @@ High-level, simplified state chart:
 
 ![Mob coding version 1.0.0 flowchart](https://learningnerd.com/images/mobcoding-flowchart-2017-06-29.svg)
 
+### Game state
+
+**Note:** As of 2017-07-10, client-side game state currently handles the editor content differently, using a separate Ace Editor object instead.
+
+```
+{
+  timeRemaining,
+  turnIndex,
+  currentGist: {id, url, owner},
+  players:
+    [
+      {id, login,avatar_url}, { ... }, { ... }, ...
+    ],
+  editor:
+    {
+      content,
+      cursorAndSelection: { cursor: {column, row}, range: { end: {column, row}, start: {column, row} },
+      scroll: {scrollLeft, scrollTop}
+    }
+}
+```
+
 ### Events List
 
-<table>
-  <thead>
-    <tr>
-      <th>Event Name</th>
-      <th>Description</th>
-      <th>Server Actions</th>
-      <th>Client Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>connection</td>
-      <td>When client connects to SocketIO</td>
-      <td>Start the whole app!</td>
-      <td><em>Not used</em></td>      
-    </tr>
-    <tr>
-      <td>disconnect</td>
-      <td>When a client disconnects from SocketIO</td>
-      <td>        
-          Remove disconnected user from playerList.<br><br>
-          If no logged-in players are left, reset the game!<br><br>
-          If the disconnected user was the current player, restart timer and change the turn!<br><br>
-          Broadcast "updateState" to all other clients.<br><br>
-          Broadcast "playerListChange" to all other clients.<br><br>        
-      </td>
-      <td>Stop the timer view.</td>
-    </tr>
-    <tr>
-      <td>userLogin</td>
-      <td>When server confirms a client is logged in</td>
-      <td>        
-          Add user info to playerList.<br><br>
-          Send current state of the text editor to the new client, broadcasting "editorTextChange", "editorCursorChange", and "editorScrollChange" if needed.<br><br>
-          If first user, initialize the game!<br><br>
-          Broadcast  "updateState" to <em>all</em> clients.<br><br>
-          Broadcast "playerListChange" to <em>all</em> clients.<br><br>        
-      </td>
-      <td>Upon successful GitHub authentication, send "userLogin" event and user data to the server.</td>
-    </tr>
-    <tr>
-      <td>playerListChange</td>
-      <td>When server confirms a player has joined or left</td>
-      <td>Broadcast player list to clients, triggered by "userLogin" and "disconnect" events.</td>
-      <td>Update UI for player list, current turn, and next turn.</td>
-    </tr>
-    <tr>
-      <td>updateState</td>
-      <td>When game state changes and clients need to be synced up</td>
-      <td>Broadcast game state to <em>all</em> clients, triggered by "userLogin" and "disconnect" events.</td>
-      <td>
-        Update local state.<br><br>
-        Update UI for Gist link, highlighted player names, timer, current turn, and next turn.<br><br>        
-      </td>
-    </tr>
-    <tr>
-      <td>turnChange</td>
-      <td>When the server's timer is up, pass control to the next player.</td>
-      <td>Broadcast turn data to <em>all</em> clients when the timer is up.</td>
-      <td>        
-          Add user info to playerList.<br><br>
-          Fork/edit the Gist, which may broadcast "newGistLink" and update Gist UI if needed.<br><br>
-          Update local state.<br><br>
-          Toggle editor read-only mode.<br><br>
-          Update UI for highlighted player names, timer, current turn, and next turn.<br><br>        
-      </td>
-    </tr>
-    <tr>
-      <td>createNewGist</td>
-      <td>When the game begins, create a new Gist on behalf of the first player.</td>
-      <td>Broadcast event to first player once logged in, if starting a new game.</td>
-      <td>        
-          Create a Gist for the current user.<br><br>
-          Broadcast "newGistLink" to server.<br><br>
-          Update Gist UI.       
-      </td>        
-    </tr>
-    <tr>
-      <td>newGistLink</td>
-      <td>When a new Gist is created or forked, sync up clients to display the new link.</td>
-      <td>Update game state and broadcast "newGistLink" to all other clients.</td>
-      <td>Update local state and update Gist UI.</td>
-    </tr>
-    <tr>
-      <td>Ace Editor: change</td>
-      <td>When a user types in the editor</td>
-      <td><em>Not used</em></td>
-      <td>
-        Update editor view with new content.<br><br>
-        Send "editorTextChange" event with data to server.
-      </td>
-    </tr>
-    <tr>
-      <td>Ace Editor: changeCursor</td>
-      <td>When a user moves the editor cursor</td>
-      <td><em>Not used</em></td>
-      <td>
-        Update cursor in editor view.<br><br>
-        Send "editorCursorChange" event with data to server.
-      </td>
-    </tr>
-    <tr>
-      <td>Ace Editor: changeScrollLeft and changeScrollTop</td>
-      <td>When a user scrolls in the editor</td>
-      <td><em>Not used</em></td>
-      <td>
-        Update scroll position in editor view.<br><br>
-        Send "editorScrollChange" event with data to server.
-      </td>
-    </tr>
-    <tr>
-      <td>editorTextChange</td>
-      <td>When a user types in the editor, sync the content across all clients.</td>
-      <td>        
-          Update local state.<br><br>
-          Verify that the data was sent from the current user -- to prevent cheating!<br><br>
-          Broadcast "editorTextChange" with updated content to all other clients.<br><br>        
-      </td>
-      <td>Update editor view with new content.</td>
-    </tr>
-    <tr>
-      <td>editorCursorChange</td>
-      <td>When a user moves the editor cursor, sync across all clients.</td>
-      <td>        
-          Update local state.<br><br>
-          Verify that the data was sent from the current user -- to prevent cheating!<br><br>
-          Broadcast "editorCursorChange" with updated content to all other clients.<br><br>        
-      </td>
-      <td>Update cursor in editor view.</td>
-    </tr>
-    <tr>
-      <td>editorScrollChange</td>
-      <td>When a user scrolls in the editor, sync across all clients.</td>
-      <td>        
-          Update local state.<br><br>
-          Verify that the data was sent from the current user -- to prevent cheating!<br><br>
-          Broadcast "editorScrollChange" with updated content to all other clients.<br><br>        
-      </td>
-      <td>Update scroll position in editor view.</td>
-    </tr>
-  </tbody>
-</table>
+| Event Name | Sent By | Sent To | Data | Description |
+|---|---|---|---|---|
+| `playerJoined` |  Client   |  Server | `{login, avatar_url}`  |  When new player completes login process |
+| `playerJoined` |  Server |  All *other* clients | `{id, login, avatar_url}`  |  Update other clients with new player data |
+| `gameState` |  Server |  One client | See game state model in section above!  |  Initialize game state for new player that just logged in, and trigger new gist creation if game is just starting! |
+| `playerLeft` |  Server |  All *other* clients | `id` |  Update other clients to remove disconnected player |
+| `turnChange` |  Server |  All clients | `onDisconnect` (Boolean)  |  Trigger clients to change the turn |
+| `newGist` |  Client |  Server  |  `{id, url, owner}`  |  Broadcast new Gist data |
+| `editorTextChange` |  Client   |  Server  |  `"current content, just a string!"`  |  Broadcast changes to code editor content |
+| `editorCursorChange` |  Client   |  Server | `{ cursor: {column, row}, range: { end: {column, row}, start: {column, row} }`  |  Broadcast cursor moves or selection changes |
+| `editorScrollChange` |  Client   |   Server | `{scrollLeft, scrollTop}`  |  Broadcast changes to code editor content  |
+| `disconnect` |   Client  |  Server |  ...   |  When clients disconnect from server (SocketIO function) |
+| `connection` |  Client   |  Server |  ...  |  When clients connect to server (SocketIO function)  |
+
 
 ## Project Log
 
@@ -372,3 +266,27 @@ High-level, simplified state chart:
 **Milestones:**
 
 - Created high-level UML state machine diagram, added to this README for [version 1.0.0 documentation](#version-100-documentation).
+
+### 2017-07-03
+
+**Today's daily learning blog post: https://learningnerd.com/2017/07/03/**
+
+**Milestones:**
+
+- Closed [#issue #4 ("Change game start condition to check state of the player list")](https://github.com/LearnTeachCode/mob-coding/issues/4)
+
+- Opened [issue #29 ("Sometimes when last user disconnects (maybe while turn is changing?), server crashes")](https://github.com/LearnTeachCode/mob-coding/issues/29)
+
+- Merged [issue #5 ("Consolidate the playerListChange and updateState events")](https://github.com/LearnTeachCode/mob-coding/issues/5) into [issue #16 ("Simplify the game state data model and events on client and server")](https://github.com/LearnTeachCode/mob-coding/issues/16) and updated issue #16.
+
+- Finished initial rewrite of events list and game state data model, started the major refactoring task for issue #16, stripping out all the guts of this app and replacing them all!
+
+### 2017-07-10
+
+**Today's daily learning blog post: https://learningnerd.com/2017/07/10/**
+
+**Milestones:**
+
+- Main refactoring task completed! Finally closed [issue #16 ("Simplify the game state data model and events on client and server")](https://github.com/LearnTeachCode/mob-coding/issues/16), also closing [issue #18](https://github.com/LearnTeachCode/mob-coding/issues/18) and [issue #14](https://github.com/LearnTeachCode/mob-coding/issues/14) in the process!
+
+- Added game state and updated events list for [version 1.0.0 documentation](#version-100-documentation) in this README.
