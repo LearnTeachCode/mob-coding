@@ -81,7 +81,7 @@ var editor = ace.edit('editor');
 var Range = ace.require('ace/range').Range;
 editor.setTheme("ace/theme/monokai");
 editor.getSession().setMode('ace/mode/javascript');
-
+editor.setReadOnly(true);
 
 /* ------------------------------------------------------------
 	EVENT LISTENERS	/ SEND DATA TO SERVER
