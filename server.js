@@ -205,72 +205,56 @@ io.on('connection', function (socket) {
 
 	// When "editorTextChange" event received, update editor state and broadcast it back out
 	socket.on('editorTextChange', function (data) {
-		
-		//console.log('editorTextChange event received!');
-		//console.log(data);
 
 		// Double check that this user is allowed to type (in case of client-side tampering with the JS!)
-		if ( socket.id === getCurrentPlayer().id ) {			
+		if ( socket.id === getCurrentPlayer().id ) {
 			// Update saved state of the shared text editor
 			gameState.editor.content = data;
 
 			// Broadcast updated editor content to other clients
 			socket.broadcast.emit('editorTextChange', gameState.editor.content);
-
-			//console.log('Broadcasting gameState.editor.content to other clients!');
 		}
-		
 	});
 
 	// When "editorCursorChange" event received, update editor state and broadcast it back out
 	socket.on('editorCursorChange', function (data) {
-		
-		//console.log('editorCursorChange event received!');
-		//console.log(data);
 
 		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
-		if (socket.id === getCurrentPlayer().id ) {			
+		if (socket.id === getCurrentPlayer().id ) {
 			// Update saved state of the shared text editor
 			gameState.editor.cursorAndSelection = data;
 
 			// Broadcast data to other clients
 			socket.broadcast.emit('editorCursorChange', gameState.editor.cursorAndSelection);
-
-			//console.log('Broadcasting editorCursorChange to other clients!');
 		}
-		
 	});
 
 	// When "editorScrollChange" event received, update editor state and broadcast it back out
 	socket.on('editorScrollChange', function (data) {
 		
-		//console.log('editorScrollChange event received!');
-		//console.log(data);
-
 		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
-		if (socket.id === getCurrentPlayer().id ) {			
+		if (socket.id === getCurrentPlayer().id ) {
 			// Update saved state of the shared text editor
 			gameState.editor.scroll = data;
 
 			// Broadcast data to other clients
 			socket.broadcast.emit('editorScrollChange', gameState.editor.cursorAndSelection);
-
-			//console.log('Broadcasting editorScrollChange to other clients!');
-		}
-		
+		}	
 	});
 
 	// When "newGist" event received, update state and broadcast it back out
 	socket.on('newGist', function (data) {
 		
-		console.log('\nnewGist event received!\n');
-		//console.log(data);
+		// Double check that this user is allowed to broadcast a new gist!
+		if (socket.id === getPreviousPlayer().id ) {
+			console.log('\nnewGist event received!\n');
+			//console.log(data);
 
-		gameState.currentGist = data;
+			gameState.currentGist = data;
 
-		// Broadcast data to other clients
-		socket.broadcast.emit('newGist', data);
-		
+			// Broadcast data to other clients
+			socket.broadcast.emit('newGist', data);
+		}
 	});
 
 });	// End of SocketIO part of the code
@@ -312,6 +296,12 @@ function startTurnTimer(timerId, turnDuration) {
 function getCurrentPlayer() {
 	return gameState.players[gameState.turnIndex];
 }
+
+function getPreviousPlayer() {
+	var previousPlayerIndex = (gameState.turnIndex - 1) % gameState.players.length;
+	return gameState.players[previousPlayerIndex];
+}
+
 function getPlayerById(id, playerList){
 	for (var i = 0; i < playerList.length; i++) {
 		if (playerList[i].id === id) {

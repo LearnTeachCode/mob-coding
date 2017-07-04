@@ -290,24 +290,24 @@ function handleTurnChange () {
 	// Remove highlight from previous player's name in playerListView
 	togglePlayerHighlight(false);
 
-	// Temporarily save the previous player ID for later comparison
-	var previousPlayerId = getCurrentPlayer().id;
+	// Temporarily save the previous player for later comparison
+	var previousPlayer = getCurrentPlayer();
 	
 	changeTurn();
 
-	// If user's turn is ending and a Gist exists, fork and/or edit the gist before passing control to next player!	
-	if (socket.id === previousPlayerId && gameState.currentGist != null) {
+	// If this client's turn is ending and a Gist exists, fork and/or edit the gist before passing control to next player!	
+	if (socket.id === previousPlayer.id && gameState.currentGist != null) {
 		console.log("User's turn is about to end.");
 
-		// If the current player does NOT own the current Gist,
-		if (getCurrentPlayer().login !== gameState.currentGist.owner) {
+		// If this client (the previous player) does NOT own the current Gist,
+		if (previousPlayer.login !== gameState.currentGist.owner) {
 			
 			console.log("handleTurnChange: now forking and editing gist " + gameState.currentGist.id);
 
-			// Fork/edit current Gist on behalf of player whose turn is about to end, and send new ID to server
+			// Fork/edit current Gist on behalf of this client (the previous player, whose turn is ending), and send new ID to server
 			forkAndEditGist(gameState.currentGist.id, editor.getValue());
 		
-		// Otherwise, JUST EDIT the current Gist and send new ID to server
+		// Otherwise, just edit the current Gist
 		} else {
 		
 			console.log("handleTurnChange: now editing gist " + gameState.currentGist.id);	
