@@ -283,6 +283,11 @@ function handleGameState (serverGameState) {
 	updateCurrentTurnView(getCurrentPlayer().login);
 	updateNextTurnView(getCurrentPlayer().login);
 	toggleMyTurnHighlight();
+
+	// If user is the current player, let them type!
+	if ( socket.id === getCurrentPlayerId() ) {
+		editor.setReadOnly(false);
+	}
 }
 
 // When receiving new player list data from server
