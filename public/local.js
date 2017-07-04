@@ -1,15 +1,38 @@
 // Start a WebSocket connection with the server using SocketIO
 var socket = io();
-	// Note that the SocketIO client-side library and this file (local.js)
-	// were both imported in index.html right before the </body> tag
 
+/* ------------------------------------------------------------
+	GAME STATE:
+
+{
+  timeRemaining,
+  turnIndex,
+  currentGist: {id, url, owner},
+  playerList:
+    [
+      {id, login,avatar_url}, { ... }, { ... }, ...
+    ],
+  editor:
+    {
+      content,
+      cursorAndSelection: { cursor: {column, row}, range: { end: {column, row}, start: {column, row} },
+      scroll: {scrollLeft, scrollTop}
+    }
+}
+
+-------------------------------------------------------------- */
+
+let gameState = {
+	timeRemaining: null,
+	turnIndex: 0,
+	currentGist: null,
+	players: []
+};
 
 // SAVING LOCAL STATE -- GLOBAL VARS (ugh) 
 var currentPlayerId;
-var userName;
 var nextPlayerId;
 var animationId;
-var currentGist; // gistData: {id, url, owner}
 // Meant to be temporary:
 var currentAccessToken;
 
@@ -124,9 +147,7 @@ socket.on('editorTextChange', handleServerEditorTextChange);
 socket.on('editorCursorChange', handleServerEditorCursorChange);
 socket.on('editorScrollChange', handleServerEditorScrollChange);
 socket.on('playerJoined', handlePlayerJoined);
-socket.on('updateState', handleUpdateState);
 socket.on('turnChange', handleTurnChange);
-socket.on('createNewGist', handleCreateNewGist);
 socket.on('newGist', handleNewGist);
 
 // When client connects to server,
@@ -148,10 +169,7 @@ socket.on('disconnect', function(){
 // Log in with authenticated user's GitHub data
 function loginUser (userData) {
 	console.log('**************** Logged in! GitHub User Data: *********************');
-	console.log(userData);	
-
-	// Save user's GitHub name to local game state
-	userName = userData.login;
+	console.log(userData);
 
 	// Update views with user's GitHub name and avatar
 	updateLoggedInView(userData.login, userData.avatar_url);
@@ -162,14 +180,8 @@ function loginUser (userData) {
 
 // Send editorInputView data to server
 function handleLocalEditorTextChange (event) {
-	//console.log('handleLocalEditorTextChange event! value: ');
-	//console.log(event);
-
-	//console.log('%c ' + editor.getValue(), 'color: green; font-weight: bold;');
-	
 	// If user is the current player, they can broadcast
-	if (socket.id === currentPlayerId) {
-		//console.log('Sending data to server!')
+	if (socket.id === getCurrentPlayerId() ) {
 		// Send data to server
 		socket.emit( 'editorTextChange', editor.getValue() );
 	}
@@ -187,7 +199,7 @@ function handleUserNameChange (event) {
 	//console.log('%c ' + myNameView.textContent, 'color: green; font-weight: bold;');
 	
 	// Update UI if user is the current or next player
-	if (currentPlayerId === socket.id) {
+	if (getCurrentPlayerId() === socket.id) {
 		updateCurrentTurnView(myNameView.textContent);	
 	} else if (nextPlayerId === socket.id) {
 		updateNextTurnView(myNameView.textContent);	
@@ -199,14 +211,10 @@ function handleUserNameChange (event) {
 
 // Send cursor and selection data to server
 function handleLocalEditorCursorChange (event) {
-	//console.log('editorCursorChange fired!');
-	//console.log('%c ' + event, 'color: green; font-weight: bold;');	
-
 	// Cursor object:
-	// {column, row}
-
+	// 		{column, row}
 	// Selection Range object:
-	// { end: {column, row}, start: {column, row} }
+	// 		{ end: {column, row}, start: {column, row} }
 
 	// Send to server:
 	socket.emit( 'editorCursorChange', { cursor: editor.getSession().selection.getCursor(), range: editor.getSession().selection.getRange() } );
@@ -214,9 +222,6 @@ function handleLocalEditorCursorChange (event) {
 
 // Send scroll data to server
 function handleLocalEditorScrollChange (event) {
-	//console.log('editorScrollChange (left or top) fired!');
-	//console.log('%c scrollLeft: ' + editor.getSession().getScrollLeft() + ', scrollTop: ' + editor.getSession().getScrollTop(), 'color: green; font-weight: bold;');
-
 	// Send to server:
 	socket.emit('editorScrollChange', { scrollLeft: editor.getSession().getScrollLeft(), scrollTop: editor.getSession().getScrollTop() });	
 }
@@ -224,20 +229,13 @@ function handleLocalEditorScrollChange (event) {
 // TODO: Test 'input' event some more in different browsers!
 	// maybe add support for IE < 9 later?
 
-
 // When receiving new editorInputView data from server
 function handleServerEditorTextChange (data) {
-	//console.log('editorTextChange event received!');
-	//console.log('%c ' + data, 'color: blue; font-weight: bold;');
-
 	updateEditorView(data);
 }
 
 // When receiving new cursor/selection data from server
 function handleServerEditorCursorChange (data) {
-	//console.log('%c cursorChange event received!', 'color: blue; font-weight: bold;');
-	//console.dir(data);
-
 	// Set Ace editor's cursor and selection range to match
 	var updatedRange = new Range(data.range.start.row, data.range.start.column, data.range.end.row, data.range.end.column);
 	editor.getSession().selection.setSelectionRange( updatedRange );
@@ -245,19 +243,50 @@ function handleServerEditorCursorChange (data) {
 
 // When receiving new scroll data from server
 function handleServerEditorScrollChange (data) {
-	//console.log('%c editorScrollChange event received!', 'color: blue; font-weight: bold;');
-	//console.dir(data); 
-
 	// Set Ace editor's scroll position to match
 	editor.getSession().setScrollLeft(data.scrollLeft);
 	editor.getSession().setScrollTop(data.scrollTop);
 }
 
+// Initialize client after logging in, using game state data from server
+function handleGameState (serverGameState) {
+	gameState.timeRemaining = serverGameState.timeRemaining;
+	gameState.turnIndex = serverGameState.turnIndex;
+	gameState.currentGist = serverGameState.currentGist;
+	gameState.players = serverGameState.players;
+
+	console.log("handleGameState called");
+	console.dir(gameState);
+	
+	// Update editor content
+	updateEditorView(serverGameState.editor.content);
+
+	// Update editor cursor and selection range
+	if (serverGameState.editor.cursorAndSelection !== null)  {
+		var updatedRange = new Range(serverGameState.editor.cursorAndSelection.range.start.row, serverGameState.editor.cursorAndSelection.range.start.column, serverGameState.editor.cursorAndSelection.range.end.row, serverGameState.editor.cursorAndSelection.range.end.column);
+		editor.getSession().selection.setSelectionRange( updatedRange );
+	}
+	
+	// Update editor scroll position
+	if (serverGameState.editor.scroll !== null)  {
+		editor.getSession().setScrollLeft(serverGameState.editor.scroll.scrollLeft);
+		editor.getSession().setScrollTop(serverGameState.editor.scroll.scrollTop);
+	}
+
+	// If no Gist exists, create it!
+	if (gameState.currentGist !== null)  {
+		handleCreateNewGist();
+	}
+
+	// Update UI
+	updateTimeLeftView(gameState.timeRemaining);
+	updateCurrentTurnView(getCurrentPlayer().login);
+	updateNextTurnView(getCurrentPlayer().login);
+	toggleMyTurnHighlight();
+}
+
 // When receiving new player list data from server
 function handlePlayerJoined (playerData) {
-	//console.log('%c playerJoined event received!', 'color: blue; font-weight: bold;');
-	//console.dir(playerData);
-
 	// Transform the data!!
 
 	// Transform into an array to more easily reorder it
@@ -299,7 +328,7 @@ function handleTurnChange (turnData) {
 	togglePlayerHighlight(false);
 
 	// Temporarily save the previous player ID for later comparison
-	var previousPlayerId = currentPlayerId;
+	var previousPlayerId = getCurrentPlayerId();
 
 	// Update local state
 	currentPlayerId = turnData.current.id;
@@ -310,7 +339,7 @@ function handleTurnChange (turnData) {
 		console.log("User's turn is about to end.");
 
 		// If the current player does NOT own the current Gist,
-		if (userName !== turnData.gist.owner) {
+		if (getPlayerById(socket.id, gameState.players).login !== turnData.gist.owner) {
 			
 			//console.log("handleTurnChange: now forking and editing gist " + turnData.gist.id);
 
@@ -346,36 +375,6 @@ function handleTurnChange (turnData) {
 	toggleMyTurnHighlight();
 	if (turnData.gist != null) updateCurrentGistView(turnData.gist);
 }
-
-// When receiving updateState event from server,
-// when new users join the game! 
-function handleUpdateState (turnData) {
-	//console.log('%c handleUpdateState event received! TIME: ' + new Date().toString().substring(16,25), 'color: blue; font-weight: bold;');
-	//console.dir(turnData);	
-
-	// Remove highlight from previous current player's name in playerListView
-	togglePlayerHighlight(false);	
-
-	// Temporarily save the previous player ID for later comparison
-	var previousPlayerId = currentPlayerId;
-
-	// Update local state
-	currentPlayerId = turnData.current.id;
-	nextPlayerId = turnData.next.id;
-
-	//console.log('Updated local state. Current ID: ' + currentPlayerId + ', next ID: ' + nextPlayerId);
-
-	// Add highlight to the new current player's name in playerListView
-	togglePlayerHighlight(true);
-	
-	// Update UI
-	updateTimeLeftView(turnData.timeRemaining);
-	updateCurrentTurnView(turnData.current.name);
-	updateNextTurnView(turnData.next.name);	
-	toggleMyTurnHighlight();	
-	if (turnData.gist != null) updateCurrentGistView(turnData.gist);
-}
-
 
 // When receiving "newGist" event from server,
 function handleNewGist (gistData) {
@@ -748,4 +747,38 @@ function getAllUrlParams(url) {
   }
 
   return obj;
+}
+
+function getCurrentPlayer() {
+	return gameState.players[gameState.turnIndex];
+}
+
+function getCurrentPlayerId() {
+	return gameState.players[gameState.turnIndex].id;
+}
+
+function getPlayerById(id, playerList){
+	for (var i = 0; i < playerList.length; i++) {
+		if (playerList[i].id === id) {
+			return playerList[i];
+		}
+	}
+	return -1;
+}
+
+function getPlayerIndexById(id, playerList) {
+	for (var i = 0; i < playerList.length; i++) {
+		if (playerList[i].id === id) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+function removePlayer(id, playerList) {
+	for (var i = 0; i < playerList.length; i++) {
+		if (playerList[i].id === id) {
+			playerList.splice(i, 1);
+		}
+	}
 }
