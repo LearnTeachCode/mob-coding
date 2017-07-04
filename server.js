@@ -152,50 +152,44 @@ io.on('connection', function (socket) {
 
 	});
 
-	// When a user disconnects,
+	// When a player disconnects,
 	socket.on('disconnect', function() {
 		
-		console.log('\nA user disconnected!\n');	
-		//console.log('gameState.turnIndex: ' + gameState.turnIndex);
+		console.log('\nA user disconnected!\n');
 
-		// If disconnected user was logged in,		
+		// If disconnected player was logged in,
 		if (getPlayerById(socket.id, gameState.players) !== -1) {
+
 			console.log('\n\t User removed from list of logged-in players. ID: ' + socket.id);
 
-			// Temporarily save ID of current player (before removing from playerList, for a later check!)
-			var currentPlayerId = gameState.players[gameState.turnIndex];
+			// Broadcast the disconnected player's ID to update all other clients
+			socket.broadcast.emit( 'playerLeft', socket.id );
 
-			// Remove disconnected user from player list
+			// Temporarily save ID of current player (before removing from player list, for a later check!)
+			var currentPlayerId = getCurrentPlayer().id;
+
+			// Remove disconnected player from player list
 			removePlayer(socket.id, gameState.players);
 
 			// If no logged-in players are left, reset the game!
 			if (gameState.players.length === 0) {
 				console.log('\nNo players left. Turning off the turn timer!\n');
-				gameState.turnIndex = null;
 				
 				// Turn off the timer
-				clearInterval(timerId);				
-				gameState.timeRemaining = null;
+				clearInterval(timerId);
 			
-			// Otherwise, if there are players left,
-			} else {
-			 	// If the disconnected user was the current player, restart timer and change the turn!
-			 	if (socket.id === currentPlayerId) {
+			// Otherwise, if there are players left, and the disconnected player was the current player, restart timer and change the turn!
+			} else if (socket.id === currentPlayerId) {
 					console.log('\nCURRENT PLAYER disconnected! Restarting turn/timer.\n');
 					
 					// Turn off the timer
-					clearInterval(timerId);					
-					gameState.timeRemaining = null;
+					clearInterval(timerId);
 
-					// Re-initialize the turn (and timer), passing control to the next user
-					timerId = startTurnTimer(timerId, turnDuration);			
-				}
+					// Restart the timer
+					timerId = startTurnTimer(timerId, turnDuration);
 
-				// Broadcast current turn data to update all other clients
-				socket.broadcast.emit( 'updateState', null );
-
-				// Broadcast updated playerList to update all other clients
-				socket.broadcast.emit('playerJoined', playerData);
+					// Change the turn, passing control to the next player and broadcasting to all players
+					changeTurn();
 			}
 
 		} else {
