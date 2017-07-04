@@ -185,28 +185,6 @@ function handleLocalEditorTextChange (event) {
 	}
 }
 
-// Function that prevents user from typing when it's not their turn
-function preventUserTyping (event) {
-	event.preventDefault();
-	//return false;
-};
-
-// Send user's new name to server and update UI
-function handleUserNameChange (event) {
-	//console.log('handleUserNameChange event! value: ');
-	//console.log('%c ' + myNameView.textContent, 'color: green; font-weight: bold;');
-	
-	// Update UI if user is the current or next player
-	if (getCurrentPlayer().id === socket.id) {
-		updateCurrentTurnView(myNameView.textContent);	
-	} else if (nextPlayerId === socket.id) {
-		updateNextTurnView(myNameView.textContent);	
-	}
-
-	// Send user's new name to server
-	socket.emit('userNameChange', myNameView.textContent);	
-}
-
 // Send cursor and selection data to server
 function handleLocalEditorCursorChange (event) {
 	// Cursor object:
@@ -489,7 +467,7 @@ function updateCurrentTurnView (playerName) {
 	currentTurnView.textContent = playerName;
 
 	// If user is the current player, highlight their name
-	if (socket.id === currentPlayerId) {
+	if (socket.id === getCurrentPlayer().id) {
 		currentTurnView.classList.add('highlightme');
 		currentTurnView.textContent = "It's your turn!";
 	} else {
@@ -503,7 +481,7 @@ function updateNextTurnView (playerName) {
 	nextTurnView.textContent = playerName;
 
 	// If user is the next player, highlight their name
-	if (socket.id === nextPlayerId) {
+	if (socket.id === getNextPlayer().id) {
 		nextTurnView.classList.add('highlightme');
 		nextTurnView.textContent = "You're up next!";
 	} else {
