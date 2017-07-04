@@ -135,20 +135,15 @@ connection 			Client 		Server 				... 						When clients connect to server (Sock
 // When a user connects over websocket,
 io.on('connection', function (socket) {
 	
-	console.log('\nA user connected! (But not yet logged in.)\n');	
-	//console.log('\t\t playerList.length: ' + gameState.players.length);
+	console.log('\nA user connected! (But not yet logged in.)\n');		
 
 	// When a user logs in,
 	socket.on('userLogin', function (userData) {
 		console.log('\n* * * * # # # #  User logged in!  # # # # * * * * *');
-		console.log('\t\t > > > ' + userData.login + ' < < <\n');
-		//console.log('\t\t gameState.players.length: ' + gameState.players.length);
+		console.log('\t\t > > > ' + userData.login + ' < < <\n');		
 
-		// Add user ID/name to playerList
-		playerData[socket.id] = {};
-		playerData[socket.id].login = userData.login;
-		playerData[socket.id].avatar_url = userData.avatar_url;
-		gameState.players.push(socket.id);
+		// Add new user
+		gameState.players.push({id: socket.id, login: userData.login, avatar_url: userData.avatar_url});
 
 		// Send current state of the text editor to the new client, to initialize!
 		socket.emit('editorTextChange', gameState.editor.content);
@@ -174,8 +169,7 @@ io.on('connection', function (socket) {
 		// Broadcast updated playerList to ALL clients
 		io.emit('playerListChange', playerData);
 
-		console.log('\non("userLogin") -- turnData broadcasted!\n');
-		//console.log( getTurnData() );
+		console.log('\non("userLogin") -- turnData broadcasted!\n');		
 	});
 
 	// When a user disconnects,
@@ -184,16 +178,15 @@ io.on('connection', function (socket) {
 		console.log('\nA user disconnected!\n');	
 		//console.log('gameState.turnIndex: ' + gameState.turnIndex);
 
-		// If disconnected user was logged in,
-		if (gameState.players.indexOf(socket.id) !== -1) {
+		// If disconnected user was logged in,		
+		if (getPlayerById(socket.id, gameState.players) !== -1) {
 			console.log('\n\t User removed from list of logged-in players. ID: ' + socket.id);
 
 			// Temporarily save ID of current player (before removing from playerList, for a later check!)
 			var currentPlayerId = gameState.players[gameState.turnIndex];
 
-			// Remove disconnected user from playerList
-			delete playerData[socket.id];
-			gameState.players.splice( gameState.players.indexOf(socket.id), 1);			
+			// Remove disconnected user from player list
+			removePlayer(socket.id, gameState.players);
 
 			// If no logged-in players are left, reset the game!
 			if (gameState.players.length === 0) {
@@ -237,7 +230,7 @@ io.on('connection', function (socket) {
 		//console.log(data);
 
 		// Double check that this user is allowed to type (in case of client-side tampering with the JS!)
-		if (socket.id === gameState.players[gameState.turnIndex]) {			
+		if ( socket.id === getCurrentPlayerId() ) {			
 			// Update saved state of the shared text editor
 			gameState.editor.content = data;
 
@@ -256,7 +249,7 @@ io.on('connection', function (socket) {
 		//console.log(data);
 
 		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
-		if (socket.id === gameState.players[gameState.turnIndex]) {			
+		if (socket.id === getCurrentPlayerId() ) {			
 			// Update saved state of the shared text editor
 			gameState.editor.cursorAndSelection = data;
 
@@ -275,7 +268,7 @@ io.on('connection', function (socket) {
 		//console.log(data);
 
 		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
-		if (socket.id === gameState.players[gameState.turnIndex]) {			
+		if (socket.id === getCurrentPlayerId() ) {			
 			// Update saved state of the shared text editor
 			gameState.editor.scroll = data;
 
@@ -307,29 +300,27 @@ io.on('connection', function (socket) {
 	FUNCTIONS
 ---------------------------------------------------- */
 function changeTurn(socketId) {
-	// If current client is first player, initialize!	  		
+	// If current client is first player, initialize!
 	if (gameState.turnIndex == null) {
 		console.log('\nINITIALIZING FIRST PLAYER\n');
-		gameState.turnIndex = gameState.players.indexOf(socketId);
-		//console.log('gameState.turnIndex: ' + gameState.turnIndex);
+		// *** REWRITE THIS PART! ***
+
 	// Otherwise, increment the current player
-	} else {	  			
-		//console.log('\nIncrementing gameState.turnIndex\n');
+	} else {
 		gameState.turnIndex = (gameState.turnIndex + 1) % gameState.players.length;
-		//console.log('NEW gameState.turnIndex: ' + gameState.turnIndex);
 	}
 }
 
 // Returns turnChange object for the current turn
 function getTurnData() {
 	//console.log('getTurnData called');
-	var currentPlayerId = gameState.players[gameState.turnIndex];
-	var currentPlayerName = playerData[currentPlayerId].login;
+	var currentPlayerId = getCurrentPlayerId();
+	var currentPlayerName = gameState.players[gameState.turnIndex].login;
 	
 	var nextPlayerIndex = (gameState.turnIndex + 1) % gameState.players.length;
 	
-	var nextPlayerId = gameState.players[nextPlayerIndex];
-	var nextPlayerName = playerData[nextPlayerId].login;	
+	var nextPlayerId = gameState.players[nextPlayerIndex].id;
+	var nextPlayerName = gameState.players[nextPlayerIndex].login;
 
 	return {timeRemaining: gameState.timeRemaining - Date.now(), current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}, gist: gameState.currentGist};
 }
@@ -362,4 +353,32 @@ function startTurnTimer(timerId, turnDuration, socketId) {
 	}, turnDuration); // TO DO: enable user-specified turn length
 
 	return timerId;
+}
+
+// Helper functions, just in case:
+function getCurrentPlayerId() {
+	return gameState.players[gameState.turnIndex].id;
+}
+function getPlayerById(id, playerList){
+	for (var i = 0; i < playerList.length; i++) {
+		if (playerList[i].id === id) {
+			return playerList[i];
+		}
+	}
+	return -1;
+}
+function getPlayerIndexById(id, playerList) {
+	for (var i = 0; i < playerList.length; i++) {
+		if (playerList[i].id === id) {
+			return i;
+		}
+	}
+	return -1;
+}
+function removePlayer(id, playerList) {
+	for (var i = 0; i < playerList.length; i++) {
+		if (playerList[i].id === id) {
+			playerList.splice(i, 1);
+		}
+	}
 }
