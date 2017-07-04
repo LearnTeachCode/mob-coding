@@ -98,12 +98,6 @@ let gameState = {
     }
 };
 
-/* ------------------------------------------------------------
-	EVENT NAMES:
-
-	// Will redo this part!
-
--------------------------------------------------------------- */
 const turnDuration = 60000;
 let timerId = null;
 
@@ -138,7 +132,7 @@ io.on('connection', function (socket) {
 	console.log('\nA user connected! (But not yet logged in.)\n');		
 
 	// When a user logs in,
-	socket.on('userLogin', function (userData) {
+	socket.on('playerJoined', function (userData) {
 		console.log('\n* * * * # # # #  User logged in!  # # # # * * * * *');
 		console.log('\t\t > > > ' + userData.login + ' < < <\n');		
 
@@ -154,7 +148,7 @@ io.on('connection', function (socket) {
 			socket.emit('editorCursorChange', gameState.editor.cursorAndSelection);
 		}
 		
-		// If there is 1 player logged in (the first player to join, who just triggered the "userLogin" event),
+		// If there is 1 player logged in (the first player to join, who just triggered the "playerJoined" event),
 		// START THE GAME!!!
 		if (gameState.players.length === 1) {
 			timerId = startTurnTimer(timerId, turnDuration, socket.id);
@@ -167,9 +161,9 @@ io.on('connection', function (socket) {
 		io.emit( 'updateState', getTurnData() );
 
 		// Broadcast updated playerList to ALL clients
-		io.emit('playerListChange', playerData);
+		io.emit('playerJoined', playerData);
 
-		console.log('\non("userLogin") -- turnData broadcasted!\n');		
+		console.log('\non("playerJoined") -- turnData broadcasted!\n');		
 	});
 
 	// When a user disconnects,
@@ -215,7 +209,7 @@ io.on('connection', function (socket) {
 				socket.broadcast.emit( 'updateState', getTurnData() );
 
 				// Broadcast updated playerList to update all other clients
-				socket.broadcast.emit('playerListChange', playerData);
+				socket.broadcast.emit('playerJoined', playerData);
 			}
 
 		} else {
@@ -280,16 +274,16 @@ io.on('connection', function (socket) {
 		
 	});
 
-	// When "newGistLink" event received, update state and broadcast it back out
-	socket.on('newGistLink', function (data) {
+	// When "newGist" event received, update state and broadcast it back out
+	socket.on('newGist', function (data) {
 		
-		console.log('\nnewGistLink event received!\n');
+		console.log('\nnewGist event received!\n');
 		//console.log(data);
 
 		gameState.currentGist = data;
 
 		// Broadcast data to other clients
-		socket.broadcast.emit('newGistLink', data);
+		socket.broadcast.emit('newGist', data);
 		
 	});
 

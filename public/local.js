@@ -53,7 +53,7 @@ if (getAllUrlParams().access_token) {
 	currentAccessToken = getAllUrlParams().access_token;
 
 	getJSON('https://api.github.com/user?access_token=' + currentAccessToken)
-	.then(handleUserLogin).catch(handleError);
+	.then(loginUser).catch(handleError);
 
 // Otherwise, if user has not yet started the login process,
 } else {
@@ -83,30 +83,51 @@ editor.setTheme("ace/theme/monokai");
 editor.getSession().setMode('ace/mode/javascript');
 editor.setReadOnly(true);
 
-/* ------------------------------------------------------------
-	EVENT LISTENERS	/ SEND DATA TO SERVER
+/* ---------------------------------------------------------------------------------------------------------------------------------------------------
+	EVENTS:
 
-	EVENT NAMES: 			CLIENT FUNCTIONS:
-	- connection 			Send: 		SocketIO built-in event
-	- disconnect 			Send: 		SocketIO built-in event
-	- userLogin				Send: 		handleUserLogin
-	- editorTextChange		Send: 		handleLocalEditorTextChange
-							Receive: 	handleServerEditorTextChange
-	- playerListChange 		Receive: 	handlePlayerListChange
-	- updateState			Receive: 	handleUpdateState
-	- turnChange 			Receive: 	handleTurnChange
-	- editorCursorChange		Send: 	handleLocalEditorCursorChange
-							Receive: 	handleServerEditorCursorChange
-	- editorScrollChange 		Send: 	handleLocalEditorScrollChange
-							Receive: 	handleServerEditorScrollChange
-	- createNewGist 		Receive: 	handleCreateNewGist
-	- newGistLink			Receive: 	handleNewGistLink
-							Send: 		(sent after creating or forking)	
--------------------------------------------------------------- */
+Event Name 			Sent By 	Sent To 			Data 						Client Functions: 				Description
+------------------	----------	------------------	--------------------------	----------------------------- 	---------------------------------------------
+playerJoined 		Client 		Server 				{login, avatar_url} 		loginUser						When new player completes login process
+playerJoined 		Server 		All other clients 	{id, login, avatar_url} 	handlePlayerJoined				Update other clients with new player data
+gameState 			Server 		One client 			See game state model! 		handleGameState					Initialize game state for new player that just logged in,
+																													and trigger new gist creation if game is just starting!
+playerLeft 			Server 		All other clients 	id 															Update other clients to remove disconnected player
+turnChange 			Server 		All clients 		null ??? 					handleTurnChange				Triggerclients to change the turn
+newGist 			Client 		Server 				{id, url, owner} 			handleNewGist					Broadcast new Gist data
+editorTextChange	Client 		Server 				"just a string!" 			handleLocalEditorTextChange		Broadcast changes to code editor content
+editorScrollChange 	Client 		Server 				{scrollLeft, scrollTop} 	handleLocalEditorScrollChange	Broadcast changes to code editor content
+editorCursorChange 	Client 		Server 				{ 							handleLocalEditorCursorChange	Broadcast cursor moves or selection changes
+														cursor: {column, row},
+														range: {
+															end: {column, row},
+															start: {column, row}
+														}
+													}	
+disconnect 			Client 		Server 				... 						...								When clients disconnect from server (SocketIO function)
+connection 			Client 		Server 				... 						... 							When clients connect to server (SocketIO function)
+
+---------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+/* ------------------------------------------------------------
+	LOCAL EVENT LISTENERS
+-------------------------------------------------------------- */	
 editor.getSession().on('change', handleLocalEditorTextChange);
 editor.getSession().selection.on('changeCursor', handleLocalEditorCursorChange);
 editor.getSession().on('changeScrollLeft', handleLocalEditorScrollChange);
 editor.getSession().on('changeScrollTop', handleLocalEditorScrollChange);
+
+/* -------------------------------------------------
+	SERVER EVENT LISTENERS
+---------------------------------------------------- */
+socket.on('editorTextChange', handleServerEditorTextChange);
+socket.on('editorCursorChange', handleServerEditorCursorChange);
+socket.on('editorScrollChange', handleServerEditorScrollChange);
+socket.on('playerJoined', handlePlayerJoined);
+socket.on('updateState', handleUpdateState);
+socket.on('turnChange', handleTurnChange);
+socket.on('createNewGist', handleCreateNewGist);
+socket.on('newGist', handleNewGist);
 
 // When client connects to server,
 socket.on('connect', function(){	
@@ -125,7 +146,7 @@ socket.on('disconnect', function(){
 });
 
 // Log in with authenticated user's GitHub data
-function handleUserLogin (userData) {
+function loginUser (userData) {
 	console.log('**************** Logged in! GitHub User Data: *********************');
 	console.log(userData);	
 
@@ -136,7 +157,7 @@ function handleUserLogin (userData) {
 	updateLoggedInView(userData.login, userData.avatar_url);
 
 	// Notify server that user logged in
-	socket.emit('userLogin', {login: userData.login, avatar_url: userData.avatar_url});
+	socket.emit('playerJoined', {login: userData.login, avatar_url: userData.avatar_url});
 }
 
 // Send editorInputView data to server
@@ -203,17 +224,6 @@ function handleLocalEditorScrollChange (event) {
 // TODO: Test 'input' event some more in different browsers!
 	// maybe add support for IE < 9 later?
 
-/* -------------------------------------------------
-	EVENT LISTENERS / RECEIVE DATA FROM SERVER	
----------------------------------------------------- */
-socket.on('editorTextChange', handleServerEditorTextChange);
-socket.on('editorCursorChange', handleServerEditorCursorChange);
-socket.on('editorScrollChange', handleServerEditorScrollChange);
-socket.on('playerListChange', handlePlayerListChange);
-socket.on('updateState', handleUpdateState);
-socket.on('turnChange', handleTurnChange);
-socket.on('createNewGist', handleCreateNewGist);
-socket.on('newGistLink', handleNewGistLink);
 
 // When receiving new editorInputView data from server
 function handleServerEditorTextChange (data) {
@@ -244,8 +254,8 @@ function handleServerEditorScrollChange (data) {
 }
 
 // When receiving new player list data from server
-function handlePlayerListChange (playerData) {
-	//console.log('%c playerListChange event received!', 'color: blue; font-weight: bold;');
+function handlePlayerJoined (playerData) {
+	//console.log('%c playerJoined event received!', 'color: blue; font-weight: bold;');
 	//console.dir(playerData);
 
 	// Transform the data!!
@@ -367,8 +377,8 @@ function handleUpdateState (turnData) {
 }
 
 
-// When receiving "newGistLink" event from server,
-function handleNewGistLink (gistData) {
+// When receiving "newGist" event from server,
+function handleNewGist (gistData) {
 	// Update local state
 	console.log("called handleNewGist at " + new Date().toString().substring(16,25), 'color: green; font-weight: bold;');
 	console.log(gistData);
@@ -557,7 +567,7 @@ function handleCreateNewGist() {
 		currentGist = {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login};
 
 		// Send new gist data to server
-		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
+		socket.emit('newGist', {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
 		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
@@ -606,7 +616,7 @@ function forkAndEditGist(gistId, codeEditorContent) {
 		console.dir(gistObject);
 
 		// Send new gist data to server
-		socket.emit('newGistLink', {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
+		socket.emit('newGist', {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
 		// Then edit the new gist:
 		editGist(gistObject.id, codeEditorContent);
