@@ -210,7 +210,7 @@ io.on('connection', function (socket) {
 		//console.log(data);
 
 		// Double check that this user is allowed to type (in case of client-side tampering with the JS!)
-		if ( socket.id === getCurrentPlayerId() ) {			
+		if ( socket.id === getCurrentPlayer().id ) {			
 			// Update saved state of the shared text editor
 			gameState.editor.content = data;
 
@@ -229,7 +229,7 @@ io.on('connection', function (socket) {
 		//console.log(data);
 
 		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
-		if (socket.id === getCurrentPlayerId() ) {			
+		if (socket.id === getCurrentPlayer().id ) {			
 			// Update saved state of the shared text editor
 			gameState.editor.cursorAndSelection = data;
 
@@ -248,7 +248,7 @@ io.on('connection', function (socket) {
 		//console.log(data);
 
 		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
-		if (socket.id === getCurrentPlayerId() ) {			
+		if (socket.id === getCurrentPlayer().id ) {			
 			// Update saved state of the shared text editor
 			gameState.editor.scroll = data;
 
@@ -309,8 +309,8 @@ function startTurnTimer(timerId, turnDuration) {
 }
 
 // Helper functions, just in case:
-function getCurrentPlayerId() {
-	return gameState.players[gameState.turnIndex].id;
+function getCurrentPlayer() {
+	return gameState.players[gameState.turnIndex];
 }
 function getPlayerById(id, playerList){
 	for (var i = 0; i < playerList.length; i++) {

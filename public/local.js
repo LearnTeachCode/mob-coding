@@ -179,7 +179,7 @@ function loginUser (userData) {
 // Send editorInputView data to server
 function handleLocalEditorTextChange (event) {
 	// If user is the current player, they can broadcast
-	if (socket.id === getCurrentPlayerId() ) {
+	if (socket.id === getCurrentPlayer().id ) {
 		// Send data to server
 		socket.emit( 'editorTextChange', editor.getValue() );
 	}
@@ -197,7 +197,7 @@ function handleUserNameChange (event) {
 	//console.log('%c ' + myNameView.textContent, 'color: green; font-weight: bold;');
 	
 	// Update UI if user is the current or next player
-	if (getCurrentPlayerId() === socket.id) {
+	if (getCurrentPlayer().id === socket.id) {
 		updateCurrentTurnView(myNameView.textContent);	
 	} else if (nextPlayerId === socket.id) {
 		updateNextTurnView(myNameView.textContent);	
@@ -283,7 +283,7 @@ function handleGameState (serverGameState) {
 	toggleMyTurnHighlight();
 
 	// If user is the current player, let them type!
-	if ( socket.id === getCurrentPlayerId() ) {
+	if ( socket.id === getCurrentPlayer().id ) {
 		editor.setReadOnly(false);
 	}
 }
@@ -311,7 +311,7 @@ function handlePlayerJoined (playerData) {
 	//console.log(playerArray);
 
 	// Get names of current and next players based on saved local IDs
-	var currentPlayerName = playerData[getCurrentPlayerId()].login;
+	var currentPlayerName = playerData[getCurrentPlayer().id].login;
 	var nextPlayerName = playerData[nextPlayerId].login;
 
 	//console.log('Updating UI with currentPlayerName: ' + currentPlayerName + ', nextPlayerName: ' + nextPlayerName);
@@ -330,7 +330,7 @@ function handleTurnChange () {
 	togglePlayerHighlight(false);
 
 	// Temporarily save the previous player ID for later comparison
-	var previousPlayerId = getCurrentPlayerId();
+	var previousPlayerId = getCurrentPlayer().id;
 	
 	changeTurn();
 
@@ -356,7 +356,7 @@ function handleTurnChange () {
 	}
 	
 	// If user is no longer the current player, prevent them from typing/broadcasting!
-	if ( socket.id !== getCurrentPlayerId() ) {
+	if ( socket.id !== getCurrentPlayer().id ) {
 		console.log("User's turn is over.");
 		editor.setReadOnly(true);
 	// Otherwise if user's turn is now starting,
@@ -410,7 +410,7 @@ function updateLoggedInView (userName, userAvatar) {
 function toggleMyTurnHighlight () {	
 
 	// If user is the next player, highlight text box
-	if ( socket.id === getCurrentPlayerId() ) {
+	if ( socket.id === getCurrentPlayer().id ) {
 		document.body.classList.add('myturn');
 	} else {
 		document.body.classList.remove('myturn');
@@ -421,13 +421,13 @@ function toggleMyTurnHighlight () {
 // Highlight name of current player in playerListView
 function togglePlayerHighlight (toggleOn) {
 	// First check if element exists, for case where user is the only player
-	if ( document.getElementById(getCurrentPlayerId()) ) {
+	if ( document.getElementById(getCurrentPlayer().id) ) {
 		// Add highlight
 		if (toggleOn) {
-			document.getElementById( getCurrentPlayerId() ).classList.add('highlight');
+			document.getElementById( getCurrentPlayer().id ).classList.add('highlight');
 		// Remove highlight
 		} else {
-			document.getElementById( getCurrentPlayerId() ).classList.remove('highlight');
+			document.getElementById( getCurrentPlayer().id ).classList.remove('highlight');
 		}	
 	}
 }
@@ -753,10 +753,6 @@ function changeTurn() {
 
 function getCurrentPlayer() {
 	return gameState.players[gameState.turnIndex];
-}
-
-function getCurrentPlayerId() {
-	return gameState.players[gameState.turnIndex].id;
 }
 
 function getNextPlayer() {
