@@ -131,39 +131,25 @@ io.on('connection', function (socket) {
 	
 	console.log('\nA user connected! (But not yet logged in.)\n');		
 
-	// When a user logs in,
+	// When a player logs in,
 	socket.on('playerJoined', function (userData) {
 		console.log('\n* * * * # # # #  User logged in!  # # # # * * * * *');
 		console.log('\t\t > > > ' + userData.login + ' < < <\n');		
 
-		// Add new user
+		// Add new player
 		gameState.players.push({id: socket.id, login: userData.login, avatar_url: userData.avatar_url});
-
-		// Send current state of the text editor to the new client, to initialize!
-		socket.emit('editorTextChange', gameState.editor.content);
-		if (gameState.editor.cursorAndSelection != null) {
-			socket.emit('editorScrollChange', gameState.editor.cursorAndSelection);
-		}
-		if (gameState.editor.cursorAndSelection != null) {
-			socket.emit('editorCursorChange', gameState.editor.cursorAndSelection);
-		}
 		
-		// If there is 1 player logged in (the first player to join, who just triggered the "playerJoined" event),
-		// START THE GAME!!!
+		// If there is 1 player logged in, START THE GAME!!!
 		if (gameState.players.length === 1) {
 			timerId = startTurnTimer(timerId, turnDuration, socket.id);
-			
-			// Notify the first user to create a new gist now!
-			socket.emit('createNewGist', null);
 		}
-			
-		// Broadcast current turn data to all clients (for the case where nextPlayerId changes when a second user joins)
-		io.emit( 'updateState', getTurnData() );
 
-		// Broadcast updated playerList to ALL clients
-		io.emit('playerJoined', playerData);
+		// Initialize new player
+		socket.emit('gameState', gameState);
 
-		console.log('\non("playerJoined") -- turnData broadcasted!\n');		
+		// Broadcast new player data to all OTHER clients
+		socket.broadcast.emit('playerJoined', playerData);
+
 	});
 
 	// When a user disconnects,
