@@ -65,66 +65,103 @@ server.listen(port, function() {
 });
 
 /* ------------------------------------------------------------
-	EVENT NAMES: 		SERVER FUNCTIONS:			
-	- userLogin			io.emit: playerListChange
-						socket.emit: editorTextChange, editorScrollChange, editorCursorChange, turnChange
-	- disconnect 		Broadcast: playerListChange
-	- editorTextChange		Broadcast: editorTextChange
-	- editorCursorChange		Broadcast: editorCursorChange
-	- editorScrollChange		Broadcast: editorScrollChange
-	- updateState		Broadcast: updateState
-	- turnChange 		Broadcast: turnChange
-	- createNewGist		Broadcast: createNewGist
-	- newGistLink		Broadcast: newGistLink	
+	GAME STATE:
+
+{
+  timeRemaining,
+  turnIndex,
+  currentGist: {id, url, owner},
+  playerList:
+    [
+      {id, login,avatar_url}, { ... }, { ... }, ...
+    ],
+  editor:
+    {
+      content,
+      cursorAndSelection: { cursor: {column, row}, range: { end: {column, row}, start: {column, row} },
+      scroll: {scrollLeft, scrollTop}
+    }
+}
+
 -------------------------------------------------------------- */
 
-// playerData:
-// { 'socket-id-here': {login: 'username-here', avatar_url: 'user-avatar-url-here'} }
+let gameState = {
+	timeRemaining: null,
+	turnIndex: 0,
+	currentGist: null,
+	players: [],
+	editor:
+    {
+      content: '// Type JavaScript here!',
+      cursorAndSelection: null,
+      scroll: null
+    }
+};
 
-var playerData = {};
-var playerList = [];
+/* ------------------------------------------------------------
+	EVENT NAMES:
 
-var editorContent = '// Type JavaScript here!';
-var editorCursorAndSelection;
-var editorScroll;
+	// Will redo this part!
 
-var currentGist;
+-------------------------------------------------------------- */
+const turnDuration = 60000;
+let timerId = null;
 
-var timerId;
-var nextTurnChangeTimestamp;
-var currentPlayerIndex;
-const turnDuration = 60000;	// 3 min: 180000
+/* ----------------------------------------------------------------------------------------------------------------------------------------------
+	EVENTS:
+
+Event Name 			Sent By 	Sent To 			Data 						Description
+------------------	----------	------------------	--------------------------	-----------------------------------------------------------------
+playerJoined 		Client 		Server 				{login, avatar_url} 		When new player completes login process
+playerJoined 		Server 		All other clients 	{id, login, avatar_url} 	Update other clients with new player data
+gameState 			Server 		One client 			See game state model! 		Initialize game state for new player that just logged in,
+																					and trigger new gist creation if game is just starting!
+playerLeft 			Server 		All other clients 	id 							Update other clients to remove disconnected player
+turnChange 			Server 		All clients 		null ??? 					Trigger clients to change the turn
+newGist 			Client 		Server 				{id, url, owner} 			Broadcast new Gist data
+editorTextChange	Client 		Server 				"just a string!" 			Broadcast changes to code editor content
+editorScrollChange 	Client 		Server 				{scrollLeft, scrollTop} 	Broadcast changes to code editor content
+editorCursorChange 	Client 		Server 				{ 							Broadcast cursor moves or selection changes
+														cursor: {column, row},
+														range: {
+															end: {column, row},
+															start: {column, row}
+														}
+													}	
+disconnect 			Client 		Server 				... 						When clients disconnect from server (SocketIO function)
+connection 			Client 		Server 				... 						When clients connect to server (SocketIO function)
+------------------------------------------------------------------------------------------------------------------------------------------------- */
 
 // When a user connects over websocket,
 io.on('connection', function (socket) {
 	
 	console.log('\nA user connected! (But not yet logged in.)\n');	
-	//console.log('\t\t playerList.length: ' + playerList.length);
+	//console.log('\t\t playerList.length: ' + gameState.players.length);
 
 	// When a user logs in,
 	socket.on('userLogin', function (userData) {
 		console.log('\n* * * * # # # #  User logged in!  # # # # * * * * *');
 		console.log('\t\t > > > ' + userData.login + ' < < <\n');
-		//console.log('\t\t playerList.length: ' + playerList.length);
+		//console.log('\t\t gameState.players.length: ' + gameState.players.length);
 
 		// Add user ID/name to playerList
 		playerData[socket.id] = {};
 		playerData[socket.id].login = userData.login;
 		playerData[socket.id].avatar_url = userData.avatar_url;
-		playerList.push(socket.id);
+		gameState.players.push(socket.id);
 
 		// Send current state of the text editor to the new client, to initialize!
-		socket.emit('editorTextChange', editorContent);
-		if (editorScroll != null) {
-			socket.emit('editorScrollChange', editorScroll);
+		socket.emit('editorTextChange', gameState.editor.content);
+		if (gameState.editor.cursorAndSelection != null) {
+			socket.emit('editorScrollChange', gameState.editor.cursorAndSelection);
 		}
-		if (editorCursorAndSelection != null) {
-			socket.emit('editorCursorChange', editorCursorAndSelection);
+		if (gameState.editor.cursorAndSelection != null) {
+			socket.emit('editorCursorChange', gameState.editor.cursorAndSelection);
 		}
 		
 		// If there is 1 player logged in (the first player to join, who just triggered the "userLogin" event),
 		// START THE GAME!!!
-		if (playerList.length === 1) {
+		if (gameState.players.length === 1) {
 			timerId = startTurnTimer(timerId, turnDuration, socket.id);
 			
 			// Notify the first user to create a new gist now!
@@ -139,38 +176,33 @@ io.on('connection', function (socket) {
 
 		console.log('\non("userLogin") -- turnData broadcasted!\n');
 		//console.log( getTurnData() );
-
-		//console.log(' ! ! !   ! ! !   player data and list   ! ! !    ! ! !');
-		//console.log(playerData);
-		//console.log(playerList);
-		//console.log('\t\t playerList.length: ' + playerList.length);
-	});	
+	});
 
 	// When a user disconnects,
 	socket.on('disconnect', function() {
 		
 		console.log('\nA user disconnected!\n');	
-		//console.log('currentPlayerIndex: ' + currentPlayerIndex);
+		//console.log('gameState.turnIndex: ' + gameState.turnIndex);
 
 		// If disconnected user was logged in,
-		if (playerList.indexOf(socket.id) !== -1) {
+		if (gameState.players.indexOf(socket.id) !== -1) {
 			console.log('\n\t User removed from list of logged-in players. ID: ' + socket.id);
 
 			// Temporarily save ID of current player (before removing from playerList, for a later check!)
-			var currentPlayerId = playerList[currentPlayerIndex];
+			var currentPlayerId = gameState.players[gameState.turnIndex];
 
 			// Remove disconnected user from playerList
 			delete playerData[socket.id];
-			playerList.splice( playerList.indexOf(socket.id), 1);			
+			gameState.players.splice( gameState.players.indexOf(socket.id), 1);			
 
 			// If no logged-in players are left, reset the game!
-			if (playerList.length === 0) {
+			if (gameState.players.length === 0) {
 				console.log('\nNo players left. Turning off the turn timer!\n');
-				currentPlayerIndex = null;
+				gameState.turnIndex = null;
 				
 				// Turn off the timer
 				clearInterval(timerId);				
-				nextTurnChangeTimestamp = null;
+				gameState.timeRemaining = null;
 			
 			// Otherwise, if there are players left,
 			} else {
@@ -180,7 +212,7 @@ io.on('connection', function (socket) {
 					
 					// Turn off the timer
 					clearInterval(timerId);					
-					nextTurnChangeTimestamp = null;
+					gameState.timeRemaining = null;
 
 					// Re-initialize the turn (and timer), passing control to the next user
 					timerId = startTurnTimer(timerId, turnDuration, socket.id);			
@@ -191,16 +223,11 @@ io.on('connection', function (socket) {
 
 				// Broadcast updated playerList to update all other clients
 				socket.broadcast.emit('playerListChange', playerData);
-			}			 
-			
-			//console.log('playerData: ');
-			//console.log(playerData);
-			//console.log('playerList: ');
-			//console.log(playerList);
+			}
 
 		} else {
 			console.log('\n\t User was not yet logged in, so no action taken.\n');
-		}		
+		}	
 	});
 
 	// When "editorTextChange" event received, update editor state and broadcast it back out
@@ -210,14 +237,14 @@ io.on('connection', function (socket) {
 		//console.log(data);
 
 		// Double check that this user is allowed to type (in case of client-side tampering with the JS!)
-		if (socket.id === playerList[currentPlayerIndex]) {			
+		if (socket.id === gameState.players[gameState.turnIndex]) {			
 			// Update saved state of the shared text editor
-			editorContent = data;
+			gameState.editor.content = data;
 
 			// Broadcast updated editor content to other clients
-			socket.broadcast.emit('editorTextChange', editorContent);
+			socket.broadcast.emit('editorTextChange', gameState.editor.content);
 
-			//console.log('Broadcasting editorContent to other clients!');
+			//console.log('Broadcasting gameState.editor.content to other clients!');
 		}
 		
 	});
@@ -229,12 +256,12 @@ io.on('connection', function (socket) {
 		//console.log(data);
 
 		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
-		if (socket.id === playerList[currentPlayerIndex]) {			
+		if (socket.id === gameState.players[gameState.turnIndex]) {			
 			// Update saved state of the shared text editor
-			editorCursorAndSelection = data;
+			gameState.editor.cursorAndSelection = data;
 
 			// Broadcast data to other clients
-			socket.broadcast.emit('editorCursorChange', editorCursorAndSelection);
+			socket.broadcast.emit('editorCursorChange', gameState.editor.cursorAndSelection);
 
 			//console.log('Broadcasting editorCursorChange to other clients!');
 		}
@@ -248,12 +275,12 @@ io.on('connection', function (socket) {
 		//console.log(data);
 
 		// Double check that this user is allowed to broadcast (in case of client-side tampering with the JS!)
-		if (socket.id === playerList[currentPlayerIndex]) {			
+		if (socket.id === gameState.players[gameState.turnIndex]) {			
 			// Update saved state of the shared text editor
-			editorScroll = data;
+			gameState.editor.scroll = data;
 
 			// Broadcast data to other clients
-			socket.broadcast.emit('editorScrollChange', editorScroll);
+			socket.broadcast.emit('editorScrollChange', gameState.editor.cursorAndSelection);
 
 			//console.log('Broadcasting editorScrollChange to other clients!');
 		}
@@ -266,7 +293,7 @@ io.on('connection', function (socket) {
 		console.log('\nnewGistLink event received!\n');
 		//console.log(data);
 
-		currentGist = data;
+		gameState.currentGist = data;
 
 		// Broadcast data to other clients
 		socket.broadcast.emit('newGistLink', data);
@@ -281,30 +308,30 @@ io.on('connection', function (socket) {
 ---------------------------------------------------- */
 function changeTurn(socketId) {
 	// If current client is first player, initialize!	  		
-	if (currentPlayerIndex == null) {
+	if (gameState.turnIndex == null) {
 		console.log('\nINITIALIZING FIRST PLAYER\n');
-		currentPlayerIndex = playerList.indexOf(socketId);
-		//console.log('currentPlayerIndex: ' + currentPlayerIndex);
+		gameState.turnIndex = gameState.players.indexOf(socketId);
+		//console.log('gameState.turnIndex: ' + gameState.turnIndex);
 	// Otherwise, increment the current player
 	} else {	  			
-		//console.log('\nIncrementing currentPlayerIndex\n');
-		currentPlayerIndex = (currentPlayerIndex + 1) % playerList.length;
-		//console.log('NEW currentPlayerIndex: ' + currentPlayerIndex);
+		//console.log('\nIncrementing gameState.turnIndex\n');
+		gameState.turnIndex = (gameState.turnIndex + 1) % gameState.players.length;
+		//console.log('NEW gameState.turnIndex: ' + gameState.turnIndex);
 	}
 }
 
 // Returns turnChange object for the current turn
 function getTurnData() {
 	//console.log('getTurnData called');
-	var currentPlayerId = playerList[currentPlayerIndex];
+	var currentPlayerId = gameState.players[gameState.turnIndex];
 	var currentPlayerName = playerData[currentPlayerId].login;
 	
-	var nextPlayerIndex = (currentPlayerIndex + 1) % playerList.length;
+	var nextPlayerIndex = (gameState.turnIndex + 1) % gameState.players.length;
 	
-	var nextPlayerId = playerList[nextPlayerIndex];
+	var nextPlayerId = gameState.players[nextPlayerIndex];
 	var nextPlayerName = playerData[nextPlayerId].login;	
 
-	return {millisRemaining: nextTurnChangeTimestamp - Date.now(), current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}, gist: currentGist};
+	return {timeRemaining: gameState.timeRemaining - Date.now(), current: {id: currentPlayerId, name: currentPlayerName}, next: {id: nextPlayerId, name: nextPlayerName}, gist: gameState.currentGist};
 }
 
 // Initializes the turn and turn timer, returns timerId
@@ -312,19 +339,19 @@ function startTurnTimer(timerId, turnDuration, socketId) {
 	console.log('\nInitializing turn timer!');
 
 	// Initialize time of next turn change (will use this to sync the clients)
-	nextTurnChangeTimestamp = Date.now() + turnDuration;
+	gameState.timeRemaining = Date.now() + turnDuration;
 
-	console.log( 'Next turn at: ' + new Date(nextTurnChangeTimestamp).toString().substring(16,25) );	
+	console.log( 'Next turn at: ' + new Date(gameState.timeRemaining).toString().substring(16,25) );	
 
 	// Initialize the turn data using given user ID
 	changeTurn(socketId);
 
 	// Every time the timer goes off,
 	timerId = setInterval(() => {	  			  		
-  		console.log('\n >>>>>>>>>>>  ' + new Date().toString().substring(16,25)	+ ' - Time to change turns!  <<<<<<<<<<\n');
+		console.log('\n >>>>>>>>>>>  ' + new Date().toString().substring(16,25)	+ ' - Time to change turns!  <<<<<<<<<<\n');
 
-  		// Update time of next turn change
-  		nextTurnChangeTimestamp = Date.now() + turnDuration;
+		// Update time of next turn change
+		gameState.timeRemaining = Date.now() + turnDuration;
 
 		changeTurn(socketId);
 

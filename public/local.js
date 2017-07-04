@@ -330,7 +330,7 @@ function handleTurnChange (turnData) {
 
 	// Update UI
 	togglePlayerHighlight(true);
-	updateTimeLeftView(turnData.millisRemaining);
+	updateTimeLeftView(turnData.timeRemaining);
 	updateCurrentTurnView(turnData.current.name);
 	updateNextTurnView(turnData.next.name);	
 	toggleMyTurnHighlight();
@@ -359,7 +359,7 @@ function handleUpdateState (turnData) {
 	togglePlayerHighlight(true);
 	
 	// Update UI
-	updateTimeLeftView(turnData.millisRemaining);
+	updateTimeLeftView(turnData.timeRemaining);
 	updateCurrentTurnView(turnData.current.name);
 	updateNextTurnView(turnData.next.name);	
 	toggleMyTurnHighlight();	
