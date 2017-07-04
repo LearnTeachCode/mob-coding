@@ -144,7 +144,9 @@ editor.getSession().on('changeScrollTop', handleLocalEditorScrollChange);
 socket.on('editorTextChange', handleServerEditorTextChange);
 socket.on('editorCursorChange', handleServerEditorCursorChange);
 socket.on('editorScrollChange', handleServerEditorScrollChange);
+socket.on('gameState', handleGameState);
 socket.on('playerJoined', handlePlayerJoined);
+socket.on('playerLeft', handlePlayerLeft);
 socket.on('turnChange', handleTurnChange);
 socket.on('newGist', handleNewGist);
 
