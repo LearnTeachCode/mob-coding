@@ -30,8 +30,6 @@ let gameState = {
 };
 
 // SAVING LOCAL STATE -- GLOBAL VARS (ugh) 
-var currentPlayerId;
-var nextPlayerId;
 var animationId;
 // Meant to be temporary:
 var currentAccessToken;
@@ -281,7 +279,7 @@ function handleGameState (serverGameState) {
 	// Update UI
 	updateTimeLeftView(gameState.timeRemaining);
 	updateCurrentTurnView(getCurrentPlayer().login);
-	updateNextTurnView(getCurrentPlayer().login);
+	updateNextTurnView(getNextPlayer().login);
 	toggleMyTurnHighlight();
 
 	// If user is the current player, let them type!
@@ -313,7 +311,7 @@ function handlePlayerJoined (playerData) {
 	//console.log(playerArray);
 
 	// Get names of current and next players based on saved local IDs
-	var currentPlayerName = playerData[currentPlayerId].login;
+	var currentPlayerName = playerData[getCurrentPlayerId()].login;
 	var nextPlayerName = playerData[nextPlayerId].login;
 
 	//console.log('Updating UI with currentPlayerName: ' + currentPlayerName + ', nextPlayerName: ' + nextPlayerName);
@@ -325,43 +323,40 @@ function handlePlayerJoined (playerData) {
 }
 
 // When receiving turnChange event from server
-function handleTurnChange (turnData) {
+function handleTurnChange () {
 	console.log('%c turnChange event received! TIME: ' + new Date().toString().substring(16,25), 'color: blue; font-weight: bold;');
-	//console.dir(turnData);	
 
-	// Remove highlight from previous current player's name in playerListView
+	// Remove highlight from previous player's name in playerListView
 	togglePlayerHighlight(false);
 
 	// Temporarily save the previous player ID for later comparison
 	var previousPlayerId = getCurrentPlayerId();
-
-	// Update local state
-	currentPlayerId = turnData.current.id;
-	nextPlayerId = turnData.next.id;
+	
+	changeTurn();
 
 	// If user's turn is ending and a Gist exists, fork and/or edit the gist before passing control to next player!	
-	if (socket.id === previousPlayerId && turnData.gist != null) {
+	if (socket.id === previousPlayerId && gameState.currentGist != null) {
 		console.log("User's turn is about to end.");
 
 		// If the current player does NOT own the current Gist,
-		if (getPlayerById(socket.id, gameState.players).login !== turnData.gist.owner) {
+		if (getCurrentPlayer().login !== gameState.currentGist.owner) {
 			
-			//console.log("handleTurnChange: now forking and editing gist " + turnData.gist.id);
+			console.log("handleTurnChange: now forking and editing gist " + gameState.currentGist.id);
 
 			// Fork/edit current Gist on behalf of player whose turn is about to end, and send new ID to server
-			forkAndEditGist(turnData.gist.id, editor.getValue());
+			forkAndEditGist(gameState.currentGist.id, editor.getValue());
 		
 		// Otherwise, JUST EDIT the current Gist and send new ID to server
 		} else {
 		
-			//console.log("handleTurnChange: now editing gist " + turnData.gist.id);	
-			editGist(turnData.gist.id, editor.getValue());
+			console.log("handleTurnChange: now editing gist " + gameState.currentGist.id);	
+			editGist(gameState.currentGist.id, editor.getValue());
 
 		}
 	}
 	
 	// If user is no longer the current player, prevent them from typing/broadcasting!
-	if (socket.id !== currentPlayerId) {
+	if ( socket.id !== getCurrentPlayerId() ) {
 		console.log("User's turn is over.");
 		editor.setReadOnly(true);
 	// Otherwise if user's turn is now starting,
@@ -369,16 +364,14 @@ function handleTurnChange (turnData) {
 		console.log("User's turn is starting!");
 		// let the user type/broadcast again
 		editor.setReadOnly(false);
-
 	}
 
 	// Update UI
 	togglePlayerHighlight(true);
-	updateTimeLeftView(turnData.timeRemaining);
-	updateCurrentTurnView(turnData.current.name);
-	updateNextTurnView(turnData.next.name);	
+	updateTimeLeftView(gameState.timeRemaining);
+	updateCurrentTurnView(getCurrentPlayer().login);
+	updateNextTurnView(getNextPlayer().login);
 	toggleMyTurnHighlight();
-	if (turnData.gist != null) updateCurrentGistView(turnData.gist);
 }
 
 // When receiving "newGist" event from server,
@@ -417,7 +410,7 @@ function updateLoggedInView (userName, userAvatar) {
 function toggleMyTurnHighlight () {	
 
 	// If user is the next player, highlight text box
-	if (socket.id === currentPlayerId) {
+	if ( socket.id === getCurrentPlayerId() ) {
 		document.body.classList.add('myturn');
 	} else {
 		document.body.classList.remove('myturn');
@@ -428,13 +421,13 @@ function toggleMyTurnHighlight () {
 // Highlight name of current player in playerListView
 function togglePlayerHighlight (toggleOn) {
 	// First check if element exists, for case where user is the only player
-	if (document.getElementById(currentPlayerId)) {
+	if ( document.getElementById(getCurrentPlayerId()) ) {
 		// Add highlight
 		if (toggleOn) {
-			document.getElementById(currentPlayerId).classList.add('highlight');
+			document.getElementById( getCurrentPlayerId() ).classList.add('highlight');
 		// Remove highlight
 		} else {
-			document.getElementById(currentPlayerId).classList.remove('highlight');
+			document.getElementById( getCurrentPlayerId() ).classList.remove('highlight');
 		}	
 	}
 }
@@ -754,12 +747,21 @@ function getAllUrlParams(url) {
   return obj;
 }
 
+function changeTurn() {
+	gameState.turnIndex = (gameState.turnIndex + 1) % gameState.players.length;
+}
+
 function getCurrentPlayer() {
 	return gameState.players[gameState.turnIndex];
 }
 
 function getCurrentPlayerId() {
 	return gameState.players[gameState.turnIndex].id;
+}
+
+function getNextPlayer() {
+	var nextPlayerIndex = (gameState.turnIndex + 1) % gameState.players.length;
+	return gameState.players[nextPlayerIndex];
 }
 
 function getPlayerById(id, playerList){
