@@ -255,6 +255,7 @@ function handleGameState (serverGameState) {
 	}
 
 	// Update UI
+	updatePlayerListView(gameState.players);
 	updateTimeLeftView(gameState.timeRemaining);
 	updateCurrentTurnView(getCurrentPlayer().login);
 	updateNextTurnView(getNextPlayer().login);
@@ -266,21 +267,24 @@ function handleGameState (serverGameState) {
 	}
 }
 
-// When receiving new player list data from server
-function handlePlayerJoined (playerData) {
+// When a new player joins, update using data from server
+function handlePlayerJoined (newPlayerData) {
 	// Add new player
-	gameState.players.push(playerData);
-
-	// Merge the two arrays, reording so current user is at the top (but removed from this list), without modifying the turn order
-	var clientIndex = getPlayerIndexById(socket.id, gameState.players);
-	var playersTopSegment = gameState.players.slice(clientIndex);
-	var playersBottomSegment = gameState.players.slice(0, clientIndex);
-	var reorderedPlayers = playersTopSegment.concat(playersBottomSegment);
+	gameState.players.push(newPlayerData);
 
 	// Update the UI
-	updatePlayerListView(reorderedPlayers);
+	updatePlayerListView(gameState.players);
 	updateCurrentTurnView(getCurrentPlayer().login);
 	updateNextTurnView(getNextPlayer().login);
+}
+
+// When a player disconnects, update using data from server
+function handlePlayerLeft (playerId) {
+	// Remove disconnected player from player list
+	removePlayer(playerId, gameState.players);
+
+	// Remove view for disconnected player from the player list view
+	playerListView.removeChild( document.getElementById(playerId) );
 }
 
 // When receiving turnChange event from server
@@ -394,7 +398,14 @@ function togglePlayerHighlight (toggleOn) {
 }
 
 // Update list of players
-function updatePlayerListView (playerArray) {	
+function updatePlayerListView (playerArray) {
+
+	// First reorder the player array so current user is at the top (but removed from this list), without modifying the turn order
+	var clientIndex = getPlayerIndexById(socket.id, playerArray);
+	var playersTopSegment = playerArray.slice(clientIndex);
+	var playersBottomSegment = playerArray.slice(0, clientIndex);
+	var reorderedPlayers = playersTopSegment.concat(playersBottomSegment);
+
 	// Delete the contents of playerListView each time
 	while (playerListView.firstChild) {
     	playerListView.removeChild(playerListView.firstChild);
@@ -404,7 +415,7 @@ function updatePlayerListView (playerArray) {
 	playerListView.appendChild(myNameListItemView);
 
 	// Append player names to playerListView
-	playerArray.forEach(function(player){		
+	reorderedPlayers.forEach(function(player){		
 		// Create an <li> node with player's name and avatar
 		var playerElement = document.createElement('li');
 		playerElement.id = player.id;		
