@@ -53,8 +53,6 @@ var timeLeftView = document.getElementById('timeleft');
 var currentTurnView = document.getElementById('currentturn');
 var nextTurnView = document.getElementById('nextturn');
 var playerListView = document.getElementById('playerlist');
-var myNameView = document.getElementById('myname');
-var myNameListItemView = document.getElementById('me');
 var currentGistView = document.getElementById('currentgist');
 /* -------------------------------------------------
 	GITHUB AUTHENTICATION	
@@ -149,15 +147,6 @@ socket.on('playerJoined', handlePlayerJoined);
 socket.on('playerLeft', handlePlayerLeft);
 socket.on('turnChange', handleTurnChange);
 socket.on('newGist', handleNewGist);
-
-// When client connects to server,
-socket.on('connect', function(){	
-	// Generate default name to match socket.id
-	//myNameView.textContent = 'Anonymous-' + socket.id.slice(0,4);
-	
-	// Update ID of first <li> in playerListView for player name highlighting with togglePlayerHighlight()
-	myNameListItemView.id = socket.id;
-});
 
 // When client disconnects, stop the timer!
 socket.on('disconnect', function(){	
@@ -362,15 +351,6 @@ function updateLoggedInView (userName, userAvatar) {
 	window.setTimeout(function(){
 		loginModalView.style.display = 'none';
 	}, 900);
-
-	// Set myNameView to use GitHub username
-	myNameView.textContent = userName;
-
-	// Display user's GitHub avatar image
-	var userAvatarElem = document.createElement('img');
-  	userAvatarElem.src = userAvatar;
-  	userAvatarElem.classList.add('avatar');
-  	myNameListItemView.insertBefore(userAvatarElem, myNameView);
 }
 
 // UI highlights to notify user when it's their turn
@@ -402,7 +382,7 @@ function togglePlayerHighlight (toggleOn) {
 // Update list of players
 function updatePlayerListView (playerArray) {
 
-	// First reorder the player array so current user is at the top (but removed from this list), without modifying the turn order
+	// First reorder the player array so current user is at the top, without modifying the turn order
 	var clientIndex = getPlayerIndexById(socket.id, playerArray);
 	var playersTopSegment = playerArray.slice(clientIndex);
 	var playersBottomSegment = playerArray.slice(0, clientIndex);
@@ -412,9 +392,6 @@ function updatePlayerListView (playerArray) {
 	while (playerListView.firstChild) {
     	playerListView.removeChild(playerListView.firstChild);
 	}
-
-	// Put li#me back into playerListView! (using previously saved reference)
-	playerListView.appendChild(myNameListItemView);
 
 	// Append player names to playerListView
 	reorderedPlayers.forEach(function(player){		
