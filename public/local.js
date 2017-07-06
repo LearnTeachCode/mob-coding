@@ -5,7 +5,7 @@ var socket = io();
 	GAME STATE:
 
 {
-  timeRemaining,
+  nextTurnTimestamp,
   turnIndex,
   currentGist: {id, url, owner},
   playerList:
@@ -23,7 +23,7 @@ var socket = io();
 -------------------------------------------------------------- */
 
 let gameState = {
-	timeRemaining: null,
+	nextTurnTimestamp: null,
 	turnIndex: 0,
 	currentGist: null,
 	players: []
@@ -217,7 +217,7 @@ function handleServerEditorScrollChange (data) {
 
 // Initialize client after logging in, using game state data from server
 function handleGameState (serverGameState) {
-	gameState.timeRemaining = serverGameState.timeRemaining;
+	gameState.nextTurnTimestamp = serverGameState.nextTurnTimestamp;
 	gameState.turnIndex = serverGameState.turnIndex;
 	gameState.currentGist = serverGameState.currentGist;
 	gameState.players = serverGameState.players;
@@ -247,7 +247,7 @@ function handleGameState (serverGameState) {
 
 	// Update UI
 	updatePlayerListView(gameState.players);
-	updateTimeLeftView(gameState.timeRemaining);
+	updateTimeLeftView(gameState.nextTurnTimestamp);
 	updateCurrentTurnView(getCurrentPlayer().login);
 	updateNextTurnView(getNextPlayer().login);
 	toggleMyTurnHighlight();
@@ -282,6 +282,9 @@ function handlePlayerLeft (playerId) {
 function handleTurnChange () {
 	console.log('%c turnChange event received! TIME: ' + new Date().toString().substring(16,25), 'color: blue; font-weight: bold;');
 
+	// Update the timestamp of the next turn, reset the clock!
+	gameState.nextTurnTimestamp = Date.now() + turnDuration;
+
 	// Remove highlight from previous player's name in playerListView
 	togglePlayerHighlight(false);
 
@@ -292,7 +295,7 @@ function handleTurnChange () {
 
 	// If this client's turn is ending and a Gist exists, fork and/or edit the gist before passing control to next player!	
 	if (socket.id === previousPlayer.id && gameState.currentGist != null) {
-		console.log("User's turn is about to end.");
+		console.log("This user's turn is about to end.");
 
 		// If this client (the previous player) does NOT own the current Gist,
 		if (previousPlayer.login !== gameState.currentGist.owner) {
@@ -312,19 +315,18 @@ function handleTurnChange () {
 	}
 	
 	// If user is no longer the current player, prevent them from typing/broadcasting!
-	if ( socket.id !== getCurrentPlayer().id ) {
-		console.log("User's turn is over.");
+	if ( socket.id !== getCurrentPlayer().id ) {		
 		editor.setReadOnly(true);
 	// Otherwise if user's turn is now starting,
 	} else {
-		console.log("User's turn is starting!");
+		console.log("User's turn is starting. Allow typing!");
 		// let the user type/broadcast again
 		editor.setReadOnly(false);
 	}
 
 	// Update UI
 	togglePlayerHighlight(true);
-	updateTimeLeftView(gameState.timeRemaining);
+	updateTimeLeftView(gameState.nextTurnTimestamp);
 	updateCurrentTurnView(getCurrentPlayer().login);
 	updateNextTurnView(getNextPlayer().login);
 	toggleMyTurnHighlight();
@@ -424,18 +426,12 @@ function updateEditorView (editorData) {
 	editor.selection.clearSelection();
 }
 
-// Update timeLeftView with the time remaining	
-function updateTimeLeftView (timerDurationMillis) {
-
-	//console.log('updateTimeLeftView CALLED with: ' + timerDurationMillis);
-
-	var turnEndTimestamp = Date.now() + timerDurationMillis;
+// Update timeLeftView to display the time remaining in mm:ss format
+function updateTimeLeftView (nextTurnTimestamp) {
 
 	// Animate countdown timer
 	function step(timestamp) {
-		var millisRemaining = turnEndTimestamp - Date.now();
-
-		//console.log('millisRemaining: ' + millisRemaining);
+		var millisRemaining = nextTurnTimestamp - Date.now();
 
 		var secondsRemaining = Math.floor(millisRemaining / 1000);
 		var minutes = Math.floor(secondsRemaining / 60);

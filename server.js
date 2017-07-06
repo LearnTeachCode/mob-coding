@@ -68,7 +68,7 @@ server.listen(port, function() {
 	GAME STATE:
 
 {
-  timeRemaining,
+  nextTurnTimestamp,
   turnIndex,
   currentGist: {id, url, owner},
   playerList:
@@ -86,7 +86,7 @@ server.listen(port, function() {
 -------------------------------------------------------------- */
 
 let gameState = {
-	timeRemaining: null,
+	nextTurnTimestamp: null,
 	turnIndex: 0,
 	currentGist: null,
 	players: [],
@@ -268,16 +268,16 @@ function startTurnTimer(timerId, turnDuration) {
 	console.log('\nInitializing turn timer!');
 
 	// Initialize or reset time remaining
-	gameState.timeRemaining = turnDuration;
+	gameState.nextTurnTimestamp = Date.now() + turnDuration;
 
-	console.log( 'Next turn at: ' + new Date(Date.now() + gameState.timeRemaining).toString().substring(16,25) );
+	console.log( 'Next turn at: ' + new Date(gameState.nextTurnTimestamp).toString().substring(16,25) );
 
-	// Every time the timer goes off,
+	// Every time the timer goes off, update timestamp and change turn!
 	timerId = setInterval(() => {
 		console.log('\n >>>>>>>>>>>  ' + new Date().toString().substring(16,25)	+ ' - Time to change turns!  <<<<<<<<<<\n');
 
 		// Update time of next turn change
-		gameState.timeRemaining = turnDuration;
+		gameState.nextTurnTimestamp = Date.now() + turnDuration;
 
 		changeTurn();
 
