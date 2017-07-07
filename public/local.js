@@ -325,7 +325,7 @@ function handleTurnChange () {
 	}
 
 	// Update UI
-	togglePlayerHighlight(true);
+	togglePlayerHighlight(getCurrentPlayer().id);
 	updateTimeLeftView(gameState.nextTurnTimestamp);
 	updateCurrentTurnView(getCurrentPlayer().login);
 	updateNextTurnView(getNextPlayer().login);
@@ -367,17 +367,19 @@ function toggleMyTurnHighlight () {
 
 }
 
-// Highlight name of current player in playerListView
-function togglePlayerHighlight (toggleOn) {
-	// First check if element exists, for case where user is the only player
-	if ( document.getElementById(getCurrentPlayer().id) ) {
-		// Add highlight
-		if (toggleOn) {
-			document.getElementById( getCurrentPlayer().id ).classList.add('highlight');
-		// Remove highlight
-		} else {
-			document.getElementById( getCurrentPlayer().id ).classList.remove('highlight');
-		}	
+// Highlight name of specified player in playerListView
+function togglePlayerHighlight (playerId) {	
+	var highlightedPlayerElement = document.querySelector('.highlight');
+	var nextPlayerElement = document.getElementById(playerId);
+	
+	// Remove highlight from the currently-highlighted element if it exists:
+	if (highlightedPlayerElement) {
+		highlightedPlayerElement.classList.remove('highlight');
+	}
+
+	// Add highlight to specified player element (if element exists)	
+	if (nextPlayerElement) {		
+		nextPlayerElement.classList.add('highlight');
 	}
 }
 
