@@ -188,8 +188,8 @@ io.on('connection', function (socket) {
 					// Restart the timer
 					timerId = startTurnTimer(timerId, turnDuration);
 
-					// Change the turn, passing control to the next player and broadcasting to all players
-					changeTurn();
+					// Change the turn, including ID of disconnected player to send to clients
+					changeTurn(socket.id);
 			}
 
 		} else {
@@ -257,10 +257,11 @@ io.on('connection', function (socket) {
 /* -------------------------------------------------
 	FUNCTIONS
 ---------------------------------------------------- */
-function changeTurn() {
+function changeTurn(disconnectedPlayerId) {
 	gameState.turnIndex = (gameState.turnIndex + 1) % gameState.players.length;
-	// Broadcast turnChange to ALL clients
-	io.emit('turnChange', null);
+	
+	// Broadcast turnChange to ALL clients, with disconnected player ID (which exists only if current player disconnected):
+	io.emit('turnChange', disconnectedPlayerId);
 }
 
 // Initializes the turn and turn timer, returns timerId
