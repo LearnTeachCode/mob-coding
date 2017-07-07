@@ -241,8 +241,8 @@ function handleGameState (serverGameState) {
 	}
 
 	// If no Gist exists, create it!
-	if (gameState.currentGist !== null)  {
-		handleCreateNewGist();
+	if (gameState.currentGist == null)  {
+		createNewGist();
 	}
 
 	// Update UI
@@ -252,7 +252,7 @@ function handleGameState (serverGameState) {
 	updateNextTurnView(getNextPlayer().login);
 	toggleMyTurnHighlight();
 
-	// If user is the current player, let them type!
+	// If this client is the current player, let them type!
 	if ( socket.id === getCurrentPlayer().id ) {
 		editor.setReadOnly(false);
 	}
@@ -487,8 +487,8 @@ function updateCurrentGistView (gistData) {
 	GITHUB API FUNCTIONS
 ---------------------------------------------------- */
 // Make a POST request via AJAX to create a Gist for the current user
-function handleCreateNewGist() {
-	console.log('called handleCreateNewGist at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
+function createNewGist() {
+	console.log('called createNewGist at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
 	// use currentAccessToken	
 	// use https://developer.github.com/v3/gists/#create-a-gist
 
@@ -504,12 +504,10 @@ function handleCreateNewGist() {
 
 	postWithGitHubToken('https://api.github.com/gists', gistObject).then(function(responseText){
 		//console.log(responseText);
-		console.log('handleCreateNewGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');		
+		console.log('createNewGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');		
 
 		var gistObject = JSON.parse(responseText);
 
-		console.dir(gistObject);
-		
 		// Save new gist ID and URL locally
 		currentGist = {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login};
 

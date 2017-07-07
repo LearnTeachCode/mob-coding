@@ -240,7 +240,7 @@ io.on('connection', function (socket) {
 	socket.on('newGist', function (data) {
 		
 		// Double check that this user is allowed to broadcast a new gist!
-		if (socket.id === getPreviousPlayer().id ) {
+		if (socket.id === getPreviousPlayer().id) {
 			console.log('\nnewGist event received!\n');
 			//console.log(data);
 
