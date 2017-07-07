@@ -293,7 +293,7 @@ function getCurrentPlayer() {
 }
 
 function getPreviousPlayer() {
-	var previousPlayerIndex = (gameState.turnIndex - 1) % gameState.players.length;
+	var previousPlayerIndex = (gameState.turnIndex + gameState.players.length - 1) % gameState.players.length;
 	return gameState.players[previousPlayerIndex];
 }
 
