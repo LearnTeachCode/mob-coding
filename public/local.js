@@ -243,6 +243,8 @@ function handleGameState (serverGameState) {
 	// If no Gist exists, create it!
 	if (gameState.currentGist == null)  {
 		createNewGist();
+	} else { // Otherwise, if a Gist does exist, display it!		
+		updateCurrentGistView(gameState.currentGist);
 	}
 
 	// Update UI
@@ -306,14 +308,13 @@ function handleTurnChange (disconnectedPlayerId) {
 			} else {				
 				editGist(gameState.currentGist.id, editor.getValue());
 				console.log("handleTurnChange: now editing gist " + gameState.currentGist.id);
-			}
+			}		
 		}
 	}
 
 	changeTurn();
-	
-	console.log("turn changed!");
-	console.log("turnIndex: " + gameState.turnIndex + ", # players: " + gameState.players.length, ", current player: " + getCurrentPlayer().id + "  -  " + getCurrentPlayer().login);
+		
+	console.log("TURN CHANGED! turnIndex: " + gameState.turnIndex + ", # players: " + gameState.players.length, ", current player: " + getCurrentPlayer().id + " - " + getCurrentPlayer().login);
 
 	// If user is no longer the current player, prevent them from typing/broadcasting!
 	if ( socket.id !== getCurrentPlayer().id ) {		
@@ -335,9 +336,12 @@ function handleTurnChange (disconnectedPlayerId) {
 
 // When receiving "newGist" event from server,
 function handleNewGist (gistData) {
-	// Update local state
 	console.log("called handleNewGist at " + new Date().toString().substring(16,25), 'color: green; font-weight: bold;');
 	console.log(gistData);
+
+	// Update local state
+	gameState.currentGist = gistData;
+
 	// Update views
 	updateCurrentGistView(gistData);
 }
@@ -508,13 +512,11 @@ function createNewGist() {
 
 		var gistObject = JSON.parse(responseText);
 
-		// Save new gist ID and URL locally
-		currentGist = {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login};
+		// Save new Gist data locally and update UI
+		handleNewGist({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
 
-		// Send new gist data to server
-		socket.emit('newGist', {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
-
-		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
+		// Send gist data to server
+		socket.emit('newGist', gameState.currentGist);
 
 	}, handleError);
 
