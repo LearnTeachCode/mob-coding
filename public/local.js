@@ -8,16 +8,10 @@ var socket = io();
   nextTurnTimestamp,
   turnIndex,
   currentGist: {id, url, owner},
-  playerList:
+  players:
     [
       {id, login,avatar_url}, { ... }, { ... }, ...
-    ],
-  editor:
-    {
-      content,
-      cursorAndSelection: { cursor: {column, row}, range: { end: {column, row}, start: {column, row} },
-      scroll: {scrollLeft, scrollTop}
-    }
+    ]
 }
 
 -------------------------------------------------------------- */
@@ -31,6 +25,8 @@ let gameState = {
 
 // SAVING LOCAL STATE -- GLOBAL VARS (ugh) 
 var animationId;
+// Later this shouldn't be hard-coded:
+const turnDuration = 60000;
 // Meant to be temporary:
 var currentAccessToken;
 
@@ -272,7 +268,13 @@ function handlePlayerJoined (newPlayerData) {
 }
 
 // When a player disconnects, update using data from server
-function handlePlayerLeft (playerId) {
+function handlePlayerLeft (playerId) {	
+
+	// Update turnIndex only if disconnected player comes BEFORE current player in the players array
+	if ( getPlayerIndexById(playerId, gameState.players) < gameState.turnIndex ) {
+		gameState.turnIndex--;
+	}
+
 	// Remove disconnected player from player list
 	removePlayer(playerId, gameState.players);
 
@@ -302,12 +304,12 @@ function handleTurnChange (disconnectedPlayerId) {
 			if (previousPlayer.login !== gameState.currentGist.owner) {
 				// Fork/edit current Gist on behalf of this client (the previous player, whose turn is ending), and send new ID to server
 				forkAndEditGist(gameState.currentGist.id, editor.getValue());
-				console.log("handleTurnChange: now forking and editing gist " + gameState.currentGist.id);
+				console.log("handleTurnChange: now forking and editing gist " + gameState.currentGist.id + " owned by " + gameState.currentGist.owner + "(on behalf of player " + previousPlayer.login + ")");
 
 			// Otherwise, just edit the current Gist
-			} else {				
+			} else {
 				editGist(gameState.currentGist.id, editor.getValue());
-				console.log("handleTurnChange: now editing gist " + gameState.currentGist.id);
+				console.log("handleTurnChange: now editing gist " + gameState.currentGist.id + " owned by " + gameState.currentGist.owner + "(on behalf of player " + previousPlayer.login + ")");
 			}		
 		}
 	}
@@ -562,13 +564,15 @@ function forkAndEditGist(gistId, codeEditorContent) {
 		var gistObject = JSON.parse(responseText);	
 		console.dir(gistObject);
 
-		// Send new gist data to server
-		socket.emit('newGist', {id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
-
 		// Then edit the new gist:
 		editGist(gistObject.id, codeEditorContent);
 
-		updateCurrentGistView({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
+		// Save new Gist data locally and update UI
+		handleNewGist({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
+
+		// Send new gist data to server
+		socket.emit('newGist', gameState.currentGist);
+
 
 	}, handleError);
 

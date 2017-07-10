@@ -66,12 +66,11 @@ server.listen(port, function() {
 
 /* ------------------------------------------------------------
 	GAME STATE:
-
 {
   nextTurnTimestamp,
   turnIndex,
   currentGist: {id, url, owner},
-  playerList:
+  players:
     [
       {id, login,avatar_url}, { ... }, { ... }, ...
     ],
@@ -167,6 +166,11 @@ io.on('connection', function (socket) {
 
 			// Temporarily save ID of current player (before removing from player list, for a later check!)
 			var currentPlayerId = getCurrentPlayer().id;
+
+			// Update turnIndex only if disconnected player comes BEFORE current player in the players array, and there are still players in the game:
+			if ( getPlayerIndexById(socket.id, gameState.players) < gameState.turnIndex && gameState.players.length > 1) {
+				gameState.turnIndex--;
+			}
 
 			// Remove disconnected player from player list
 			removePlayer(socket.id, gameState.players);
