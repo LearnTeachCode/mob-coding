@@ -108,7 +108,7 @@ playerJoined 		Server 		All other clients 	{id, login, avatar_url} 	handlePlayer
 gameState 			Server 		One client 			See game state model! 		handleGameState					Initialize game state for new player that just logged in,
 																													and trigger new gist creation if game is just starting!
 playerLeft 			Server 		All other clients 	id 															Update other clients to remove disconnected player
-turnChange 			Server 		All clients 		null ??? 					handleTurnChange				Triggerclients to change the turn
+turnChange 			Server 		All clients 		onDisconnect (Boolean)		handleTurnChange				Trigger clients to change the turn
 newGist 			Client 		Server 				{id, url, owner} 			handleNewGist					Broadcast new Gist data
 editorTextChange	Client 		Server 				"just a string!" 			handleLocalEditorTextChange		Broadcast changes to code editor content
 editorScrollChange 	Client 		Server 				{scrollLeft, scrollTop} 	handleLocalEditorScrollChange	Broadcast changes to code editor content
@@ -283,14 +283,14 @@ function handlePlayerLeft (playerId) {
 }
 
 // When receiving turnChange event from server
-function handleTurnChange (disconnectedPlayerId) {
+function handleTurnChange (onDisconnect) {
 	console.log('%c turnChange event received! TIME: ' + new Date().toString().substring(16,25), 'color: blue; font-weight: bold;');
 
 	// Update the timestamp of the next turn, reset the clock!
 	gameState.nextTurnTimestamp = Date.now() + turnDuration;
 
 	// If turn change was NOT triggered by current player disconnecting, and a Gist exists,
-	if (!disconnectedPlayerId && gameState.currentGist != null) {
+	if (!onDisconnect && gameState.currentGist != null) {
 		
 		// Temporarily save previous player info before changing turn
 		var previousPlayer = getCurrentPlayer();

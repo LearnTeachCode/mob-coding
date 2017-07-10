@@ -110,7 +110,7 @@ playerJoined 		Server 		All other clients 	{id, login, avatar_url} 	Update other
 gameState 			Server 		One client 			See game state model! 		Initialize game state for new player that just logged in,
 																					and trigger new gist creation if game is just starting!
 playerLeft 			Server 		All other clients 	id 							Update other clients to remove disconnected player
-turnChange 			Server 		All clients 		null ??? 					Trigger clients to change the turn
+turnChange 			Server 		All clients 		onDisconnect (Boolean)		Trigger clients to change the turn
 newGist 			Client 		Server 				{id, url, owner} 			Broadcast new Gist data
 editorTextChange	Client 		Server 				"just a string!" 			Broadcast changes to code editor content
 editorScrollChange 	Client 		Server 				{scrollLeft, scrollTop} 	Broadcast changes to code editor content
@@ -192,8 +192,8 @@ io.on('connection', function (socket) {
 					// Restart the timer
 					timerId = startTurnTimer(timerId, turnDuration);
 
-					// Change the turn, including ID of disconnected player to send to clients
-					changeTurn(socket.id);
+					// Change the turn, including the onDisconnect=true flag to signal clients NOT to fork/edit the Gist on this turn change
+					changeTurn(true);
 			}
 
 		} else {
@@ -261,11 +261,11 @@ io.on('connection', function (socket) {
 /* -------------------------------------------------
 	FUNCTIONS
 ---------------------------------------------------- */
-function changeTurn(disconnectedPlayerId) {
+function changeTurn(onDisconnect) {
 	gameState.turnIndex = (gameState.turnIndex + 1) % gameState.players.length;
 	
 	// Broadcast turnChange to ALL clients, with disconnected player ID (which exists only if current player disconnected):
-	io.emit('turnChange', disconnectedPlayerId);
+	io.emit('turnChange', onDisconnect);
 }
 
 // Initializes the turn and turn timer, returns timerId
