@@ -11,6 +11,9 @@ var port = process.env.PORT || 8000;	// Set the default port number to 8000, or 
 // Use Express to serve everything in the "public" folder as static files
 app.use(express.static('public'));
 
+// Save table of temp codes and access tokens, for sending access tokens to the corresponding clients via headers
+let clientTokens = {};
+
 // Pass GITHUB_CLIENT_ID to client when requested (using AJAX for now)
 	// TODO (later): mess around with templating engines and Express .render()?
 app.get('/github-client', function (req, res) {
@@ -48,8 +51,13 @@ function authenticateUser (req, res) {
 
 		// TODO (later): check the scopes, because users can authorize less than what my app requested!
 
-		// Redirect to home page again but now with the access token!
-		res.redirect('/?access_token=' + JSON.parse(githubResponseBody).access_token);		
+		// Save received access token to clientTokens to keep it associated with this client
+		clientTokens[req.query.code] = JSON.parse(githubResponseBody).access_token;
+
+		// Redirect to home page again, with the temp code as a URL param
+		// TODO (later): can I use server-side rendering to accomplish this also???
+		res.redirect('/?tempcode=' + req.query.code);
+		
 	  });
 	});
 
@@ -57,6 +65,23 @@ function authenticateUser (req, res) {
 	request.end();
 
 }
+
+// Pass GitHub access token to corresponding client, if it matches client's temp code
+app.get('/github-token', function (req, res) {
+
+	let tempCode = req.header('GitHub-Temp-Code');
+
+	console.log('Request received for /github-token route for temp code: ' + tempCode);
+
+	if ( clientTokens.hasOwnProperty(tempCode) ) {
+		console.log('\t Temp code MATCHES! Sending access token in response header!');
+		res.header('GitHub-Token', clientTokens[tempCode]);
+	}
+	res.end(); // Double check: can I use res.end() with no body?
+
+	console.log("\nclientTokens:\n");
+	console.log(clientTokens);
+});
 
 // Activate the server and listen on our specified port number
 server.listen(port, function() {
