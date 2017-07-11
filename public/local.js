@@ -55,28 +55,22 @@ var currentGistView = document.getElementById('currentgist');
 ---------------------------------------------------- */
 
 // If GitHub tempcode is available as a parameter, get access_token from server and log in!
-if (getAllUrlParams().tempcode) {
-
-	let tempCode = getAllUrlParams().tempcode;
+if ( window.location.href.match(/\?code=(.*)/) ) {
+	// Code for matching URL param from https://github.com/prose/gatekeeper
+	let tempCode = window.location.href.match(/\?code=(.*)/)[1];
 
 	// Remove parameter from URL, updating this entry in the client's browser history
 	history.replaceState(null, '', '/');
 	
 	// TODO: show loading animation while waiting???
-	// TODO: refactor getAllUrlParams(), don't need it, just need ONE param!
 
-	// Send tempCode to server in exchange for GitHub access token sent via headers
-	getTokenFromServer(tempCode)
-	.then(function(access_token){
-		
-		// Save the access token as a global variable for now
+	// Send tempCode to server in exchange for GitHub access token
+	get('/github-auth?code=' + tempCode).then(function(access_token){
+		// Save to local state
 		currentAccessToken = access_token;
-
-		// Authenticate with GitHub!
-		getJSON('https://api.github.com/user?access_token=' + currentAccessToken)
-		.then(loginUser).catch(handleError);
-
-	}, handleError).catch(handleError);
+		// Get user data
+		return getJSON('https://api.github.com/user?access_token=' + currentAccessToken);
+	}).then(loginUser).catch(handleError);
 
 // Otherwise, if user has not yet started the login process,
 } else {
@@ -609,27 +603,6 @@ function get(url) {
   });
 }
 
-function getTokenFromServer(tempCode) {
-  return new Promise(function(succeed, fail) {
-    var req = new XMLHttpRequest();
-    req.open("GET", '/github-token', true);
-
-    // Set header:
-    req.setRequestHeader('GitHub-Temp-Code', tempCode);
-
-    req.addEventListener("load", function() {
-      if (req.status < 400)
-        succeed(req.getResponseHeader('GitHub-Token'));
-      else
-        fail(new Error("Request failed: " + req.statusText));
-    });
-    req.addEventListener("error", function() {
-      fail(new Error("Network error"));
-    });
-    req.send(null);
-  });
-}
-
 // Returns a promise for a POST request, similar to get() above
 function postWithGitHubToken(url, postDataObject) {
   return new Promise(function(succeed, fail) {
@@ -665,70 +638,6 @@ function getJSON(url) {
 function handleError(error) {
   console.log("Error: " + error);
 };
-
-// Returns an object containing URL parameters
-// via https://www.sitepoint.com/get-url-parameters-with-javascript/
-function getAllUrlParams(url) {
-
-  // get query string from url (optional) or window
-  var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
-
-  // we'll store the parameters here
-  var obj = {};
-
-  // if query string exists
-  if (queryString) {
-
-    // stuff after # is not part of query string, so get rid of it
-    queryString = queryString.split('#')[0];
-
-    // split our query string into its component parts
-    var arr = queryString.split('&');
-
-    for (var i=0; i<arr.length; i++) {
-      // separate the keys and the values
-      var a = arr[i].split('=');
-
-      // in case params look like: list[]=thing1&list[]=thing2
-      var paramNum = undefined;
-      var paramName = a[0].replace(/\[\d*\]/, function(v) {
-        paramNum = v.slice(1,-1);
-        return '';
-      });
-
-      // set parameter value (use 'true' if empty)
-      var paramValue = typeof(a[1])==='undefined' ? true : a[1];
-
-      // (optional) keep case consistent
-      paramName = paramName.toLowerCase();
-      paramValue = paramValue.toLowerCase();
-
-      // if parameter name already exists
-      if (obj[paramName]) {
-        // convert value to array (if still string)
-        if (typeof obj[paramName] === 'string') {
-          obj[paramName] = [obj[paramName]];
-        }
-        // if no array index number specified...
-        if (typeof paramNum === 'undefined') {
-          // put the value on the end of the array
-          obj[paramName].push(paramValue);
-        }
-        // if array index number specified...
-        else {
-          // put the value at that index number
-          obj[paramName][paramNum] = paramValue;
-        }
-      }
-      // if param name doesn't exist yet, set it
-      else {
-        obj[paramName] = paramValue;
-      }
-    }
-  }
-
-  return obj;
-}
 
 function changeTurn() {
 	gameState.turnIndex = (gameState.turnIndex + 1) % gameState.players.length;
