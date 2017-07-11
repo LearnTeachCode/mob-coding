@@ -1,5 +1,5 @@
 // Start a WebSocket connection with the server using SocketIO
-var socket = io();
+const socket = io();
 
 /* ------------------------------------------------------------
 	GAME STATE:
@@ -24,11 +24,11 @@ let gameState = {
 };
 
 // SAVING LOCAL STATE -- GLOBAL VARS (ugh) 
-var animationId;
+let animationId;
 // Later this shouldn't be hard-coded:
 const turnDuration = 60000;
 // Meant to be temporary:
-var currentAccessToken;
+let currentAccessToken;
 
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
@@ -42,14 +42,14 @@ var currentAccessToken;
     - myname       		<span> user's name
     - currentgist 		<p> displays latest gist info
 ---------------------------------------------------- */
-var loginModalView = document.getElementById('loginmodal');
-var loginButtonView = document.getElementById('loginbutton');
-var editorInputView = document.getElementById('editor');
-var timeLeftView = document.getElementById('timeleft');
-var currentTurnView = document.getElementById('currentturn');
-var nextTurnView = document.getElementById('nextturn');
-var playerListView = document.getElementById('playerlist');
-var currentGistView = document.getElementById('currentgist');
+let loginModalView = document.getElementById('loginmodal');
+let loginButtonView = document.getElementById('loginbutton');
+let editorInputView = document.getElementById('editor');
+let timeLeftView = document.getElementById('timeleft');
+let currentTurnView = document.getElementById('currentturn');
+let nextTurnView = document.getElementById('nextturn');
+let playerListView = document.getElementById('playerlist');
+let currentGistView = document.getElementById('currentgist');
 /* -------------------------------------------------
 	GITHUB AUTHENTICATION	
 ---------------------------------------------------- */
@@ -94,8 +94,8 @@ if ( window.location.href.match(/\?code=(.*)/) ) {
 	ACE EDITOR SETUP
 	https://ace.c9.io
 ---------------------------------------------------- */
-var editor = ace.edit('editor');
-var Range = ace.require('ace/range').Range;
+let editor = ace.edit('editor');
+let Range = ace.require('ace/range').Range;
 editor.setTheme("ace/theme/monokai");
 editor.getSession().setMode('ace/mode/javascript');
 editor.setReadOnly(true);
@@ -202,7 +202,7 @@ function handleServerEditorTextChange (data) {
 // When receiving new cursor/selection data from server
 function handleServerEditorCursorChange (data) {
 	// Set Ace editor's cursor and selection range to match
-	var updatedRange = new Range(data.range.start.row, data.range.start.column, data.range.end.row, data.range.end.column);
+	let updatedRange = new Range(data.range.start.row, data.range.start.column, data.range.end.row, data.range.end.column);
 	editor.getSession().selection.setSelectionRange( updatedRange );
 }
 
@@ -228,7 +228,7 @@ function handleGameState (serverGameState) {
 
 	// Update editor cursor and selection range
 	if (serverGameState.editor.cursorAndSelection !== null)  {
-		var updatedRange = new Range(serverGameState.editor.cursorAndSelection.range.start.row, serverGameState.editor.cursorAndSelection.range.start.column, serverGameState.editor.cursorAndSelection.range.end.row, serverGameState.editor.cursorAndSelection.range.end.column);
+		let updatedRange = new Range(serverGameState.editor.cursorAndSelection.range.start.row, serverGameState.editor.cursorAndSelection.range.start.column, serverGameState.editor.cursorAndSelection.range.end.row, serverGameState.editor.cursorAndSelection.range.end.column);
 		editor.getSession().selection.setSelectionRange( updatedRange );
 	}
 	
@@ -295,7 +295,7 @@ function handleTurnChange (onDisconnect) {
 	if (!onDisconnect && gameState.currentGist != null) {
 		
 		// Temporarily save previous player info before changing turn
-		var previousPlayer = getCurrentPlayer();
+		let previousPlayer = getCurrentPlayer();
 		console.log("previousPlayer login: " + previousPlayer.login);
 
 		// And if this client is the one whose turn is ending, then fork and/or edit the Gist before passing control to next player!
@@ -378,8 +378,8 @@ function toggleMyTurnHighlight () {
 
 // Highlight name of specified player in playerListView
 function togglePlayerHighlight (playerId) {	
-	var highlightedPlayerElement = document.querySelector('.highlight');
-	var nextPlayerElement = document.getElementById(playerId);
+	let highlightedPlayerElement = document.querySelector('.highlight');
+	let nextPlayerElement = document.getElementById(playerId);
 	
 	// Remove highlight from the currently-highlighted element if it exists:
 	if (highlightedPlayerElement) {
@@ -396,10 +396,10 @@ function togglePlayerHighlight (playerId) {
 function updatePlayerListView (playerArray) {
 
 	// First reorder the player array so current user is at the top, without modifying the turn order
-	var clientIndex = getPlayerIndexById(socket.id, playerArray);
-	var playersTopSegment = playerArray.slice(clientIndex);
-	var playersBottomSegment = playerArray.slice(0, clientIndex);
-	var reorderedPlayers = playersTopSegment.concat(playersBottomSegment);
+	let clientIndex = getPlayerIndexById(socket.id, playerArray);
+	let playersTopSegment = playerArray.slice(clientIndex);
+	let playersBottomSegment = playerArray.slice(0, clientIndex);
+	let reorderedPlayers = playersTopSegment.concat(playersBottomSegment);
 
 	// Delete the contents of playerListView each time
 	while (playerListView.firstChild) {
@@ -409,11 +409,11 @@ function updatePlayerListView (playerArray) {
 	// Append player names to playerListView
 	reorderedPlayers.forEach(function(player){		
 		// Create an <li> node with player's name and avatar
-		var playerElement = document.createElement('li');
+		let playerElement = document.createElement('li');
 		playerElement.id = player.id;		
 
 		// Display user's GitHub avatar image
-		var userAvatarElem = document.createElement('img');
+		let userAvatarElem = document.createElement('img');
 	  	userAvatarElem.src = player.avatar_url;
   		userAvatarElem.classList.add('avatar');
 
@@ -442,11 +442,11 @@ function updateTimeLeftView (nextTurnTimestamp) {
 
 	// Animate countdown timer
 	function step(timestamp) {
-		var millisRemaining = nextTurnTimestamp - Date.now();
+		let millisRemaining = nextTurnTimestamp - Date.now();
 
-		var secondsRemaining = Math.floor(millisRemaining / 1000);
-		var minutes = Math.floor(secondsRemaining / 60);
-		var seconds = secondsRemaining % 60;
+		let secondsRemaining = Math.floor(millisRemaining / 1000);
+		let minutes = Math.floor(secondsRemaining / 60);
+		let seconds = secondsRemaining % 60;
 
 		// Format mm:ss string, padded with zeroes if needed
 		timeLeftView.textContent = ((minutes.toString().length > 1) ? minutes.toString() : '0' + minutes.toString()) + ':' + ((seconds.toString().length > 1) ? seconds.toString() : '0' + seconds.toString());
@@ -500,7 +500,7 @@ function createNewGist() {
 	// use currentAccessToken	
 	// use https://developer.github.com/v3/gists/#create-a-gist
 
-	var gistObject = {
+	let gistObject = {
 	  "description": "A saved mob programming session with Learn Teach Code!",
 	  "public": true,
 	  "files": {
@@ -514,7 +514,7 @@ function createNewGist() {
 		//console.log(responseText);
 		console.log('createNewGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');		
 
-		var gistObject = JSON.parse(responseText);
+		let gistObject = JSON.parse(responseText);
 
 		// Save new Gist data locally and update UI
 		handleNewGist({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
@@ -531,7 +531,7 @@ function editGist(gistId, codeEditorContent) {
 	console.log('called editGist at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
 	// use https://developer.github.com/v3/gists/#edit-a-gist	
 
-	var gistObject = {
+	let gistObject = {
 	  "description": "A saved mob programming session with Learn Teach Code!",
 	  "public": true,
 	  "files": {
@@ -557,13 +557,13 @@ function forkAndEditGist(gistId, codeEditorContent) {
 
 	// TODO later: see if I can refactor this function, maybe have it return a promise, so I can chain it with editGist better?
 
-	var gistObject = {"test": ""};
+	let gistObject = {"test": ""};
 
 	postWithGitHubToken('https://api.github.com/gists/' + gistId + '/forks', gistObject).then(function(responseText){
 		//console.log(responseText);
 		console.log('forkAndEditGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');		
 
-		var gistObject = JSON.parse(responseText);	
+		let gistObject = JSON.parse(responseText);	
 		console.dir(gistObject);
 
 		// Then edit the new gist:
@@ -588,7 +588,7 @@ function forkAndEditGist(gistId, codeEditorContent) {
 // via http://eloquentjavascript.net/17_http.html
 function get(url) {
   return new Promise(function(succeed, fail) {
-    var req = new XMLHttpRequest();
+    let req = new XMLHttpRequest();
     req.open("GET", url, true);
     req.addEventListener("load", function() {
       if (req.status < 400)
@@ -606,7 +606,7 @@ function get(url) {
 // Returns a promise for a POST request, similar to get() above
 function postWithGitHubToken(url, postDataObject) {
   return new Promise(function(succeed, fail) {
-    var req = new XMLHttpRequest();
+    let req = new XMLHttpRequest();
 
     req.open("POST", url, true);
     
@@ -648,12 +648,12 @@ function getCurrentPlayer() {
 }
 
 function getNextPlayer() {
-	var nextPlayerIndex = (gameState.turnIndex + 1) % gameState.players.length;
+	let nextPlayerIndex = (gameState.turnIndex + 1) % gameState.players.length;
 	return gameState.players[nextPlayerIndex];
 }
 
 function getPlayerById(id, playerList){
-	for (var i = 0; i < playerList.length; i++) {
+	for (let i = 0; i < playerList.length; i++) {
 		if (playerList[i].id === id) {
 			return playerList[i];
 		}
@@ -662,7 +662,7 @@ function getPlayerById(id, playerList){
 }
 
 function getPlayerIndexById(id, playerList) {
-	for (var i = 0; i < playerList.length; i++) {
+	for (let i = 0; i < playerList.length; i++) {
 		if (playerList[i].id === id) {
 			return i;
 		}
@@ -671,7 +671,7 @@ function getPlayerIndexById(id, playerList) {
 }
 
 function removePlayer(id, playerList) {
-	for (var i = 0; i < playerList.length; i++) {
+	for (let i = 0; i < playerList.length; i++) {
 		if (playerList[i].id === id) {
 			playerList.splice(i, 1);
 		}
