@@ -87,7 +87,7 @@ if ( window.location.href.match(/\?code=(.*)/) ) {
 		
 		// Hide "...loading..." placeholder
 		document.getElementById('loginloading').style.display = 'none';		
-	}, handleError).catch(handleError);
+	}).catch(handleError);
 }
 
 /* -------------------------------------------------
@@ -522,7 +522,7 @@ function createNewGist() {
 		// Send gist data to server
 		socket.emit('newGist', gameState.currentGist);
 
-	}, handleError);
+	}).catch(handleError);
 
 }
 
@@ -546,7 +546,7 @@ function editGist(gistId, codeEditorContent) {
 		console.log('editGist: response received at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
 		console.dir(JSON.parse(responseText));
 
-	}, handleError);
+	}).catch(handleError);
 
 }
 
@@ -576,7 +576,7 @@ function forkAndEditGist(gistId, codeEditorContent) {
 		socket.emit('newGist', gameState.currentGist);
 
 
-	}, handleError);
+	}).catch(handleError);
 
 }
 
@@ -631,7 +631,7 @@ function postWithGitHubToken(url, postDataObject) {
 // Return object from parsed JSON data from a given URL
 // via http://eloquentjavascript.net/17_http.html
 function getJSON(url) {
-  return get(url).then(JSON.parse, handleError);
+  return get(url).then(JSON.parse).catch(handleError);
 }
 
 // Lazy error handling for now
