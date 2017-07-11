@@ -290,3 +290,5 @@ High-level, simplified state chart:
 - Main refactoring task completed! Finally closed [issue #16 ("Simplify the game state data model and events on client and server")](https://github.com/LearnTeachCode/mob-coding/issues/16), also closing [issue #18](https://github.com/LearnTeachCode/mob-coding/issues/18) and [issue #14](https://github.com/LearnTeachCode/mob-coding/issues/14) in the process!
 
 - Added game state and updated events list for [version 1.0.0 documentation](#version-100-documentation) in this README.
+
+- Closed [issue #15 ("Send GitHub access token as a header, not as a URL parameter")(https://github.com/LearnTeachCode/mob-coding/issues/15)! Not sure if this is the best solution, but I can't think of a better way to handle client-side authentication without sessions.
