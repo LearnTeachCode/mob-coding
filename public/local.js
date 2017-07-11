@@ -54,21 +54,29 @@ var currentGistView = document.getElementById('currentgist');
 	GITHUB AUTHENTICATION	
 ---------------------------------------------------- */
 
-// If GitHub access_token is available as a parameter, log in!
-	// TODO: pass the token as a header instead? can client access it that way?
-if (getAllUrlParams().access_token) {
-	console.log('*********** AUTHENTICATED!!! **********');
-	console.log('access_token from URL params: ' + getAllUrlParams().access_token);
+// If GitHub tempcode is available as a parameter, get access_token from server and log in!
+if (getAllUrlParams().tempcode) {
+
+	let tempCode = getAllUrlParams().tempcode;
+
+	// Remove parameter from URL, updating this entry in the client's browser history
+	history.replaceState(null, '', '/');
 	
 	// TODO: show loading animation while waiting???
-
 	// TODO: refactor getAllUrlParams(), don't need it, just need ONE param!
-	
-	// For now, save the access token as a global variable (I'm sure this is SUPER wrong though!)
-	currentAccessToken = getAllUrlParams().access_token;
 
-	getJSON('https://api.github.com/user?access_token=' + currentAccessToken)
-	.then(loginUser).catch(handleError);
+	// Send tempCode to server in exchange for GitHub access token sent via headers
+	getTokenFromServer(tempCode)
+	.then(function(access_token){
+		
+		// Save the access token as a global variable for now
+		currentAccessToken = access_token;
+
+		// Authenticate with GitHub!
+		getJSON('https://api.github.com/user?access_token=' + currentAccessToken)
+		.then(loginUser).catch(handleError);
+
+	}, handleError).catch(handleError);
 
 // Otherwise, if user has not yet started the login process,
 } else {
@@ -591,6 +599,27 @@ function get(url) {
     req.addEventListener("load", function() {
       if (req.status < 400)
         succeed(req.responseText);
+      else
+        fail(new Error("Request failed: " + req.statusText));
+    });
+    req.addEventListener("error", function() {
+      fail(new Error("Network error"));
+    });
+    req.send(null);
+  });
+}
+
+function getTokenFromServer(tempCode) {
+  return new Promise(function(succeed, fail) {
+    var req = new XMLHttpRequest();
+    req.open("GET", '/github-token', true);
+
+    // Set header:
+    req.setRequestHeader('GitHub-Temp-Code', tempCode);
+
+    req.addEventListener("load", function() {
+      if (req.status < 400)
+        succeed(req.getResponseHeader('GitHub-Token'));
       else
         fail(new Error("Request failed: " + req.statusText));
     });
