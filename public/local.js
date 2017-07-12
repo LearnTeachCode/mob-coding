@@ -62,32 +62,13 @@ if ( window.location.href.match(/\?code=(.*)/) ) {
 	// Remove parameter from URL, updating this entry in the client's browser history
 	history.replaceState(null, '', '/');
 	
-	// TODO: show loading animation while waiting???
-
-	// Send tempCode to server in exchange for GitHub access token
-	get('/github-auth?code=' + tempCode).then(function(access_token){
-		// Save to local state
-		currentAccessToken = access_token;
-		// Get user data
-		return getJSON('https://api.github.com/user?access_token=' + currentAccessToken);
-	}).then(loginUser).catch(handleError);
+	// Authenticate and log in with GitHub
+	loginUser(tempCode);
 
 // Otherwise, if user has not yet started the login process,
 } else {
 	// Get the client ID environment variable from the server
-	get('/github-client')
-	.then(function(clientId){
-		console.log('>>>>>>>>>>>>>> Received response from /github-client route!:');
-		console.log(clientId);
-
-		// Render loginLinkView with the GitHub auth request URL
-			// TODO: review GitHub SCOPES when I try adding more features
-		document.getElementById('loginlink').setAttribute('href', 'https://github.com/login/oauth/authorize?client_id=' + clientId + '&scope=gist');
-		document.getElementById('loginlink').style.display = 'block';
-		
-		// Hide "...loading..." placeholder
-		document.getElementById('loginloading').style.display = 'none';		
-	}).catch(handleError);
+	updateLoginButtonView();
 }
 
 /* -------------------------------------------------
@@ -153,16 +134,28 @@ socket.on('disconnect', function(){
 	timeLeftView.textContent = '....';
 });
 
-// Log in with authenticated user's GitHub data
-function loginUser (userData) {
-	console.log('**************** Logged in! GitHub User Data: *********************');
-	console.log(userData);
+// Authenticate and log in with GitHub
+async function loginUser (tempCode) {
+	try {
+		// Save local state
+		currentAccessToken = await get('/github-auth?code=' + tempCode);
+		
+		// Send tempCode to server in exchange for GitHub access token
+		let userData = await getJSON('https://api.github.com/user?access_token=' + currentAccessToken);
 
-	// Update views with user's GitHub name and avatar
-	updateLoggedInView(userData.login, userData.avatar_url);
+		console.log('**************** Logged in! GitHub User Data: *********************');
+		console.log(userData);
+		// TODO: show loading animation while waiting???
+		
+		// Update views with user's GitHub name and avatar
+		updateLoggedInView(userData.login, userData.avatar_url);
 
-	// Notify server that user logged in
-	socket.emit('playerJoined', {login: userData.login, avatar_url: userData.avatar_url});
+		// Notify server that user logged in
+		socket.emit('playerJoined', {login: userData.login, avatar_url: userData.avatar_url});
+
+	} catch (err) {
+		handleError(err);
+	}
 }
 
 // Send editorInputView data to server
@@ -300,19 +293,8 @@ function handleTurnChange (onDisconnect) {
 
 		// And if this client is the one whose turn is ending, then fork and/or edit the Gist before passing control to next player!
 		if (socket.id === previousPlayer.id) {
-			console.log("This user's turn is about to end.");
-
-			// If this client (the previous player) does NOT own the current Gist,
-			if (previousPlayer.login !== gameState.currentGist.owner) {
-				// Fork/edit current Gist on behalf of this client (the previous player, whose turn is ending), and send new ID to server
-				forkAndEditGist(gameState.currentGist.id, editor.getValue());
-				console.log("handleTurnChange: now forking and editing gist " + gameState.currentGist.id + " owned by " + gameState.currentGist.owner + "(on behalf of player " + previousPlayer.login + ")");
-
-			// Otherwise, just edit the current Gist
-			} else {
-				editGist(gameState.currentGist.id, editor.getValue());
-				console.log("handleTurnChange: now editing gist " + gameState.currentGist.id + " owned by " + gameState.currentGist.owner + "(on behalf of player " + previousPlayer.login + ")");
-			}		
+			console.log("This user's turn is about to end.");			
+			forkAndEditGist(previousPlayer.login, gameState.currentGist.id, editor.getValue());
 		}
 	}
 
@@ -353,6 +335,29 @@ function handleNewGist (gistData) {
 /* -------------------------------------------------
 	FUNCTIONS TO UPDATE VIEWS	
 ---------------------------------------------------- */
+
+// Get the client ID environment variable from the server
+async function updateLoginButtonView() {
+	
+	// TODO: Handle this with server-side rendering later!
+
+	try {
+		let clientId = await get('/github-client');
+
+		console.log('>>>>>>>>>>>>>> Received response from /github-client route!:');
+		console.log(clientId);
+
+		// Render loginLinkView with the GitHub auth request URL
+			// TODO: review GitHub SCOPES when I try adding more features		
+		document.getElementById('loginlink').setAttribute('href', 'https://github.com/login/oauth/authorize?client_id=' + clientId + '&scope=gist');
+		document.getElementById('loginlink').style.display = 'block';
+		
+		// Hide "loading" placeholder
+		document.getElementById('loginloading').style.display = 'none';
+	} catch (err) {
+		handleError(err);
+	}
+}
 
 // Update views for logged in user
 function updateLoggedInView (userName, userAvatar) {	
@@ -495,7 +500,7 @@ function updateCurrentGistView (gistData) {
 	GITHUB API FUNCTIONS
 ---------------------------------------------------- */
 // Make a POST request via AJAX to create a Gist for the current user
-function createNewGist() {
+async function createNewGist() {
 	console.log('called createNewGist at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
 	// use currentAccessToken	
 	// use https://developer.github.com/v3/gists/#create-a-gist
@@ -510,28 +515,43 @@ function createNewGist() {
 	  }
 	};
 
-	postWithGitHubToken('https://api.github.com/gists', gistObject).then(function(responseText){
-		//console.log(responseText);
-		console.log('createNewGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');		
-
-		let gistObject = JSON.parse(responseText);
-
+	try {
+		let gistData = JSON.parse( await postWithGitHubToken('https://api.github.com/gists', gistObject) );
+	
 		// Save new Gist data locally and update UI
-		handleNewGist({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
+		handleNewGist({id: gistData.id, url: gistData.html_url, owner: gistData.owner.login});
 
 		// Send gist data to server
-		socket.emit('newGist', gameState.currentGist);
-
-	}).catch(handleError);
-
+		socket.emit('newGist', gameState.currentGist);	
+	} catch (err) {
+		handleError(err);
+	}
 }
 
-// Make a POST request via AJAX to update a given Gist with the current code
-function editGist(gistId, codeEditorContent) {
-	console.log('called editGist at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
-	// use https://developer.github.com/v3/gists/#edit-a-gist	
+async function forkAndEditGist(previousPlayerLogin, gistId, codeEditorContent) {
+	console.log('called forkAndEditGist at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
 
-	let gistObject = {
+	let gistObject = {"test": ""}; // TODO: see if I can just use an empty object or null
+
+	if (previousPlayerLogin !== gameState.currentGist.owner) {
+		try {
+			let gistData = await postWithGitHubToken('https://api.github.com/gists/' + gistId + '/forks', gistObject).then(JSON.parse);
+
+			console.log('forkGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
+			console.dir(gistData);
+
+			// Save new Gist data locally and update UI
+			handleNewGist({id: gistData.id, url: gistData.html_url, owner: gistData.owner.login});
+			
+			// Send new Gist data to server
+			socket.emit('newGist', gameState.currentGist);
+
+		} catch (err) {
+			handleError(err);
+		}
+	}
+
+	gistObject = {
 	  "description": "A saved mob programming session with Learn Teach Code!",
 	  "public": true,
 	  "files": {
@@ -541,43 +561,13 @@ function editGist(gistId, codeEditorContent) {
 	  }
 	};
 
-	postWithGitHubToken('https://api.github.com/gists/' + gistId, gistObject).then(function(responseText){
-		//console.log(responseText);
-		console.log('editGist: response received at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
-		console.dir(JSON.parse(responseText));
-
-	}).catch(handleError);
-
-}
-
-// Make a POST request via AJAX to fork a given Gist, then commit to it with editGist()
-function forkAndEditGist(gistId, codeEditorContent) {
-	console.log('called forkAndEditGist at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
-	// use https://developer.github.com/v3/gists/#fork-a-gist
-
-	// TODO later: see if I can refactor this function, maybe have it return a promise, so I can chain it with editGist better?
-
-	let gistObject = {"test": ""};
-
-	postWithGitHubToken('https://api.github.com/gists/' + gistId + '/forks', gistObject).then(function(responseText){
-		//console.log(responseText);
-		console.log('forkAndEditGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');		
-
-		let gistObject = JSON.parse(responseText);	
-		console.dir(gistObject);
-
-		// Then edit the new gist:
-		editGist(gistObject.id, codeEditorContent);
-
-		// Save new Gist data locally and update UI
-		handleNewGist({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
-
-		// Send new gist data to server
-		socket.emit('newGist', gameState.currentGist);
-
-
-	}).catch(handleError);
-
+	try {
+		await postWithGitHubToken('https://api.github.com/gists/' + gameState.currentGist.id, gistObject);
+		console.log('editGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
+	} catch (err) {
+		handleError(err);
+	}
+	
 }
 
 /* -------------------------------------------------
