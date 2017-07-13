@@ -1,12 +1,12 @@
 // Setting up libraries and configuration
 require('dotenv').config();				// Loads variables from .env file into process.env
-var express = require('express');		// The require() function includes the code for Express
-var app = express();					// Initialize the Express library
-var http = require('http');				// Get access to Node's http methods!
-var https = require('https');			// ... and https methods!
-var server = http.Server(app);			// Initialize an Express HTTP server
-var io = require('socket.io')(server);	// Include and initialize SocketIO
-var port = process.env.PORT || 8000;	// Set the default port number to 8000, or use Heroku's settings (process.env.PORT)
+const express = require('express');		// The require() function includes the code for Express
+const app = express();					// Initialize the Express library
+const http = require('http');				// Get access to Node's http methods!
+const https = require('https');			// ... and https methods!
+const server = http.Server(app);			// Initialize an Express HTTP server
+const io = require('socket.io')(server);	// Include and initialize SocketIO
+const port = process.env.PORT || 8000;	// Set the default port number to 8000, or use Heroku's settings (process.env.PORT)
 
 // Use Express to serve everything in the "public" folder as static files
 app.use(express.static('public'));
@@ -26,10 +26,10 @@ function authenticateUser (req, res) {
 	// TO DO: use "state" param and verify it for extra security!
 
 	// Make a POST request to https://github.com/login/oauth/access_token	
-	var githubResponseBody = '';
-	var postRequestBody = 'client_id=' + process.env.GITHUB_CLIENT_ID + '&client_secret=' + process.env.GITHUB_CLIENT_SECRET + '&code=' + req.query.code;
+	let githubResponseBody = '';
+	let postRequestBody = 'client_id=' + process.env.GITHUB_CLIENT_ID + '&client_secret=' + process.env.GITHUB_CLIENT_SECRET + '&code=' + req.query.code;
 
-	var request = https.request({
+	let request = https.request({
 	  hostname: 'github.com', 
 	  path: '/login/oauth/access_token',
 	  port: '443',
@@ -164,7 +164,7 @@ io.on('connection', function (socket) {
 			socket.broadcast.emit( 'playerLeft', socket.id );
 
 			// Temporarily save ID of current player (before removing from player list, for a later check!)
-			var currentPlayerId = getCurrentPlayer().id;
+			let currentPlayerId = getCurrentPlayer().id;
 
 			// Update turnIndex only if disconnected player comes BEFORE current player in the players array, and there are still players in the game:
 			if ( getPlayerIndexById(socket.id, gameState.players) < gameState.turnIndex && gameState.players.length > 1) {
@@ -296,12 +296,12 @@ function getCurrentPlayer() {
 }
 
 function getPreviousPlayer() {
-	var previousPlayerIndex = (gameState.turnIndex + gameState.players.length - 1) % gameState.players.length;
+	let previousPlayerIndex = (gameState.turnIndex + gameState.players.length - 1) % gameState.players.length;
 	return gameState.players[previousPlayerIndex];
 }
 
 function getPlayerById(id, playerList){
-	for (var i = 0; i < playerList.length; i++) {
+	for (let i = 0; i < playerList.length; i++) {
 		if (playerList[i].id === id) {
 			return playerList[i];
 		}
@@ -309,7 +309,7 @@ function getPlayerById(id, playerList){
 	return -1;
 }
 function getPlayerIndexById(id, playerList) {
-	for (var i = 0; i < playerList.length; i++) {
+	for (let i = 0; i < playerList.length; i++) {
 		if (playerList[i].id === id) {
 			return i;
 		}
@@ -317,7 +317,7 @@ function getPlayerIndexById(id, playerList) {
 	return -1;
 }
 function removePlayer(id, playerList) {
-	for (var i = 0; i < playerList.length; i++) {
+	for (let i = 0; i < playerList.length; i++) {
 		if (playerList[i].id === id) {
 			playerList.splice(i, 1);
 		}

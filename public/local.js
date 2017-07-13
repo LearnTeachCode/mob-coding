@@ -1,5 +1,5 @@
 // Start a WebSocket connection with the server using SocketIO
-var socket = io();
+const socket = io();
 
 /* ------------------------------------------------------------
 	GAME STATE:
@@ -24,11 +24,11 @@ let gameState = {
 };
 
 // SAVING LOCAL STATE -- GLOBAL VARS (ugh) 
-var animationId;
+let animationId;
 // Later this shouldn't be hard-coded:
 const turnDuration = 60000;
 // Meant to be temporary:
-var currentAccessToken;
+let currentAccessToken;
 
 /* -------------------------------------------------
 	LIST OF IDs, DYNAMIC ELEMENTS:
@@ -42,14 +42,14 @@ var currentAccessToken;
     - myname       		<span> user's name
     - currentgist 		<p> displays latest gist info
 ---------------------------------------------------- */
-var loginModalView = document.getElementById('loginmodal');
-var loginButtonView = document.getElementById('loginbutton');
-var editorInputView = document.getElementById('editor');
-var timeLeftView = document.getElementById('timeleft');
-var currentTurnView = document.getElementById('currentturn');
-var nextTurnView = document.getElementById('nextturn');
-var playerListView = document.getElementById('playerlist');
-var currentGistView = document.getElementById('currentgist');
+let loginModalView = document.getElementById('loginmodal');
+let loginButtonView = document.getElementById('loginbutton');
+let editorInputView = document.getElementById('editor');
+let timeLeftView = document.getElementById('timeleft');
+let currentTurnView = document.getElementById('currentturn');
+let nextTurnView = document.getElementById('nextturn');
+let playerListView = document.getElementById('playerlist');
+let currentGistView = document.getElementById('currentgist');
 /* -------------------------------------------------
 	GITHUB AUTHENTICATION	
 ---------------------------------------------------- */
@@ -62,40 +62,21 @@ if ( window.location.href.match(/\?code=(.*)/) ) {
 	// Remove parameter from URL, updating this entry in the client's browser history
 	history.replaceState(null, '', '/');
 	
-	// TODO: show loading animation while waiting???
-
-	// Send tempCode to server in exchange for GitHub access token
-	get('/github-auth?code=' + tempCode).then(function(access_token){
-		// Save to local state
-		currentAccessToken = access_token;
-		// Get user data
-		return getJSON('https://api.github.com/user?access_token=' + currentAccessToken);
-	}).then(loginUser).catch(handleError);
+	// Authenticate and log in with GitHub
+	loginUser(tempCode);
 
 // Otherwise, if user has not yet started the login process,
 } else {
 	// Get the client ID environment variable from the server
-	get('/github-client')
-	.then(function(clientId){
-		console.log('>>>>>>>>>>>>>> Received response from /github-client route!:');
-		console.log(clientId);
-
-		// Render loginLinkView with the GitHub auth request URL
-			// TODO: review GitHub SCOPES when I try adding more features
-		document.getElementById('loginlink').setAttribute('href', 'https://github.com/login/oauth/authorize?client_id=' + clientId + '&scope=gist');
-		document.getElementById('loginlink').style.display = 'block';
-		
-		// Hide "...loading..." placeholder
-		document.getElementById('loginloading').style.display = 'none';		
-	}, handleError).catch(handleError);
+	updateLoginButtonView();
 }
 
 /* -------------------------------------------------
 	ACE EDITOR SETUP
 	https://ace.c9.io
 ---------------------------------------------------- */
-var editor = ace.edit('editor');
-var Range = ace.require('ace/range').Range;
+let editor = ace.edit('editor');
+let Range = ace.require('ace/range').Range;
 editor.setTheme("ace/theme/monokai");
 editor.getSession().setMode('ace/mode/javascript');
 editor.setReadOnly(true);
@@ -153,16 +134,28 @@ socket.on('disconnect', function(){
 	timeLeftView.textContent = '....';
 });
 
-// Log in with authenticated user's GitHub data
-function loginUser (userData) {
-	console.log('**************** Logged in! GitHub User Data: *********************');
-	console.log(userData);
+// Authenticate and log in with GitHub
+async function loginUser (tempCode) {
+	try {
+		// Save local state
+		currentAccessToken = await get('/github-auth?code=' + tempCode);
+		
+		// Send tempCode to server in exchange for GitHub access token
+		let userData = await getJSON('https://api.github.com/user?access_token=' + currentAccessToken);
 
-	// Update views with user's GitHub name and avatar
-	updateLoggedInView(userData.login, userData.avatar_url);
+		console.log('**************** Logged in! GitHub User Data: *********************');
+		console.log(userData);
+		// TODO: show loading animation while waiting???
+		
+		// Update views with user's GitHub name and avatar
+		updateLoggedInView(userData.login, userData.avatar_url);
 
-	// Notify server that user logged in
-	socket.emit('playerJoined', {login: userData.login, avatar_url: userData.avatar_url});
+		// Notify server that user logged in
+		socket.emit('playerJoined', {login: userData.login, avatar_url: userData.avatar_url});
+
+	} catch (err) {
+		handleError(err);
+	}
 }
 
 // Send editorInputView data to server
@@ -202,7 +195,7 @@ function handleServerEditorTextChange (data) {
 // When receiving new cursor/selection data from server
 function handleServerEditorCursorChange (data) {
 	// Set Ace editor's cursor and selection range to match
-	var updatedRange = new Range(data.range.start.row, data.range.start.column, data.range.end.row, data.range.end.column);
+	let updatedRange = new Range(data.range.start.row, data.range.start.column, data.range.end.row, data.range.end.column);
 	editor.getSession().selection.setSelectionRange( updatedRange );
 }
 
@@ -228,7 +221,7 @@ function handleGameState (serverGameState) {
 
 	// Update editor cursor and selection range
 	if (serverGameState.editor.cursorAndSelection !== null)  {
-		var updatedRange = new Range(serverGameState.editor.cursorAndSelection.range.start.row, serverGameState.editor.cursorAndSelection.range.start.column, serverGameState.editor.cursorAndSelection.range.end.row, serverGameState.editor.cursorAndSelection.range.end.column);
+		let updatedRange = new Range(serverGameState.editor.cursorAndSelection.range.start.row, serverGameState.editor.cursorAndSelection.range.start.column, serverGameState.editor.cursorAndSelection.range.end.row, serverGameState.editor.cursorAndSelection.range.end.column);
 		editor.getSession().selection.setSelectionRange( updatedRange );
 	}
 	
@@ -295,24 +288,13 @@ function handleTurnChange (onDisconnect) {
 	if (!onDisconnect && gameState.currentGist != null) {
 		
 		// Temporarily save previous player info before changing turn
-		var previousPlayer = getCurrentPlayer();
+		let previousPlayer = getCurrentPlayer();
 		console.log("previousPlayer login: " + previousPlayer.login);
 
 		// And if this client is the one whose turn is ending, then fork and/or edit the Gist before passing control to next player!
 		if (socket.id === previousPlayer.id) {
-			console.log("This user's turn is about to end.");
-
-			// If this client (the previous player) does NOT own the current Gist,
-			if (previousPlayer.login !== gameState.currentGist.owner) {
-				// Fork/edit current Gist on behalf of this client (the previous player, whose turn is ending), and send new ID to server
-				forkAndEditGist(gameState.currentGist.id, editor.getValue());
-				console.log("handleTurnChange: now forking and editing gist " + gameState.currentGist.id + " owned by " + gameState.currentGist.owner + "(on behalf of player " + previousPlayer.login + ")");
-
-			// Otherwise, just edit the current Gist
-			} else {
-				editGist(gameState.currentGist.id, editor.getValue());
-				console.log("handleTurnChange: now editing gist " + gameState.currentGist.id + " owned by " + gameState.currentGist.owner + "(on behalf of player " + previousPlayer.login + ")");
-			}		
+			console.log("This user's turn is about to end.");			
+			forkAndEditGist(previousPlayer.login, gameState.currentGist.id, editor.getValue());
 		}
 	}
 
@@ -354,6 +336,29 @@ function handleNewGist (gistData) {
 	FUNCTIONS TO UPDATE VIEWS	
 ---------------------------------------------------- */
 
+// Get the client ID environment variable from the server
+async function updateLoginButtonView() {
+	
+	// TODO: Handle this with server-side rendering later!
+
+	try {
+		let clientId = await get('/github-client');
+
+		console.log('>>>>>>>>>>>>>> Received response from /github-client route!:');
+		console.log(clientId);
+
+		// Render loginLinkView with the GitHub auth request URL
+			// TODO: review GitHub SCOPES when I try adding more features		
+		document.getElementById('loginlink').setAttribute('href', 'https://github.com/login/oauth/authorize?client_id=' + clientId + '&scope=gist');
+		document.getElementById('loginlink').style.display = 'block';
+		
+		// Hide "loading" placeholder
+		document.getElementById('loginloading').style.display = 'none';
+	} catch (err) {
+		handleError(err);
+	}
+}
+
 // Update views for logged in user
 function updateLoggedInView (userName, userAvatar) {	
 	// Hide loginModalView	
@@ -378,8 +383,8 @@ function toggleMyTurnHighlight () {
 
 // Highlight name of specified player in playerListView
 function togglePlayerHighlight (playerId) {	
-	var highlightedPlayerElement = document.querySelector('.highlight');
-	var nextPlayerElement = document.getElementById(playerId);
+	let highlightedPlayerElement = document.querySelector('.highlight');
+	let nextPlayerElement = document.getElementById(playerId);
 	
 	// Remove highlight from the currently-highlighted element if it exists:
 	if (highlightedPlayerElement) {
@@ -396,10 +401,10 @@ function togglePlayerHighlight (playerId) {
 function updatePlayerListView (playerArray) {
 
 	// First reorder the player array so current user is at the top, without modifying the turn order
-	var clientIndex = getPlayerIndexById(socket.id, playerArray);
-	var playersTopSegment = playerArray.slice(clientIndex);
-	var playersBottomSegment = playerArray.slice(0, clientIndex);
-	var reorderedPlayers = playersTopSegment.concat(playersBottomSegment);
+	let clientIndex = getPlayerIndexById(socket.id, playerArray);
+	let playersTopSegment = playerArray.slice(clientIndex);
+	let playersBottomSegment = playerArray.slice(0, clientIndex);
+	let reorderedPlayers = playersTopSegment.concat(playersBottomSegment);
 
 	// Delete the contents of playerListView each time
 	while (playerListView.firstChild) {
@@ -409,11 +414,11 @@ function updatePlayerListView (playerArray) {
 	// Append player names to playerListView
 	reorderedPlayers.forEach(function(player){		
 		// Create an <li> node with player's name and avatar
-		var playerElement = document.createElement('li');
+		let playerElement = document.createElement('li');
 		playerElement.id = player.id;		
 
 		// Display user's GitHub avatar image
-		var userAvatarElem = document.createElement('img');
+		let userAvatarElem = document.createElement('img');
 	  	userAvatarElem.src = player.avatar_url;
   		userAvatarElem.classList.add('avatar');
 
@@ -442,11 +447,11 @@ function updateTimeLeftView (nextTurnTimestamp) {
 
 	// Animate countdown timer
 	function step(timestamp) {
-		var millisRemaining = nextTurnTimestamp - Date.now();
+		let millisRemaining = nextTurnTimestamp - Date.now();
 
-		var secondsRemaining = Math.floor(millisRemaining / 1000);
-		var minutes = Math.floor(secondsRemaining / 60);
-		var seconds = secondsRemaining % 60;
+		let secondsRemaining = Math.floor(millisRemaining / 1000);
+		let minutes = Math.floor(secondsRemaining / 60);
+		let seconds = secondsRemaining % 60;
 
 		// Format mm:ss string, padded with zeroes if needed
 		timeLeftView.textContent = ((minutes.toString().length > 1) ? minutes.toString() : '0' + minutes.toString()) + ':' + ((seconds.toString().length > 1) ? seconds.toString() : '0' + seconds.toString());
@@ -495,12 +500,12 @@ function updateCurrentGistView (gistData) {
 	GITHUB API FUNCTIONS
 ---------------------------------------------------- */
 // Make a POST request via AJAX to create a Gist for the current user
-function createNewGist() {
+async function createNewGist() {
 	console.log('called createNewGist at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
 	// use currentAccessToken	
 	// use https://developer.github.com/v3/gists/#create-a-gist
 
-	var gistObject = {
+	let gistObject = {
 	  "description": "A saved mob programming session with Learn Teach Code!",
 	  "public": true,
 	  "files": {
@@ -510,28 +515,43 @@ function createNewGist() {
 	  }
 	};
 
-	postWithGitHubToken('https://api.github.com/gists', gistObject).then(function(responseText){
-		//console.log(responseText);
-		console.log('createNewGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');		
-
-		var gistObject = JSON.parse(responseText);
-
+	try {
+		let gistData = JSON.parse( await postWithGitHubToken('https://api.github.com/gists', gistObject) );
+	
 		// Save new Gist data locally and update UI
-		handleNewGist({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
+		handleNewGist({id: gistData.id, url: gistData.html_url, owner: gistData.owner.login});
 
 		// Send gist data to server
-		socket.emit('newGist', gameState.currentGist);
-
-	}, handleError);
-
+		socket.emit('newGist', gameState.currentGist);	
+	} catch (err) {
+		handleError(err);
+	}
 }
 
-// Make a POST request via AJAX to update a given Gist with the current code
-function editGist(gistId, codeEditorContent) {
-	console.log('called editGist at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
-	// use https://developer.github.com/v3/gists/#edit-a-gist	
+async function forkAndEditGist(previousPlayerLogin, gistId, codeEditorContent) {
+	console.log('called forkAndEditGist at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
 
-	var gistObject = {
+	let gistObject = {"test": ""}; // TODO: see if I can just use an empty object or null
+
+	if (previousPlayerLogin !== gameState.currentGist.owner) {
+		try {
+			let gistData = await postWithGitHubToken('https://api.github.com/gists/' + gistId + '/forks', gistObject).then(JSON.parse);
+
+			console.log('forkGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
+			console.dir(gistData);
+
+			// Save new Gist data locally and update UI
+			handleNewGist({id: gistData.id, url: gistData.html_url, owner: gistData.owner.login});
+			
+			// Send new Gist data to server
+			socket.emit('newGist', gameState.currentGist);
+
+		} catch (err) {
+			handleError(err);
+		}
+	}
+
+	gistObject = {
 	  "description": "A saved mob programming session with Learn Teach Code!",
 	  "public": true,
 	  "files": {
@@ -541,43 +561,13 @@ function editGist(gistId, codeEditorContent) {
 	  }
 	};
 
-	postWithGitHubToken('https://api.github.com/gists/' + gistId, gistObject).then(function(responseText){
-		//console.log(responseText);
-		console.log('editGist: response received at ' + new Date().toString().substring(16,25), 'color: orange; font-weight: bold;');
-		console.dir(JSON.parse(responseText));
-
-	}, handleError);
-
-}
-
-// Make a POST request via AJAX to fork a given Gist, then commit to it with editGist()
-function forkAndEditGist(gistId, codeEditorContent) {
-	console.log('called forkAndEditGist at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
-	// use https://developer.github.com/v3/gists/#fork-a-gist
-
-	// TODO later: see if I can refactor this function, maybe have it return a promise, so I can chain it with editGist better?
-
-	var gistObject = {"test": ""};
-
-	postWithGitHubToken('https://api.github.com/gists/' + gistId + '/forks', gistObject).then(function(responseText){
-		//console.log(responseText);
-		console.log('forkAndEditGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');		
-
-		var gistObject = JSON.parse(responseText);	
-		console.dir(gistObject);
-
-		// Then edit the new gist:
-		editGist(gistObject.id, codeEditorContent);
-
-		// Save new Gist data locally and update UI
-		handleNewGist({id: gistObject.id, url: gistObject.html_url, owner: gistObject.owner.login});
-
-		// Send new gist data to server
-		socket.emit('newGist', gameState.currentGist);
-
-
-	}, handleError);
-
+	try {
+		await postWithGitHubToken('https://api.github.com/gists/' + gameState.currentGist.id, gistObject);
+		console.log('editGist: response received at ' + new Date().toString().substring(16,25), 'color: red; font-weight: bold;');
+	} catch (err) {
+		handleError(err);
+	}
+	
 }
 
 /* -------------------------------------------------
@@ -588,7 +578,7 @@ function forkAndEditGist(gistId, codeEditorContent) {
 // via http://eloquentjavascript.net/17_http.html
 function get(url) {
   return new Promise(function(succeed, fail) {
-    var req = new XMLHttpRequest();
+    let req = new XMLHttpRequest();
     req.open("GET", url, true);
     req.addEventListener("load", function() {
       if (req.status < 400)
@@ -606,7 +596,7 @@ function get(url) {
 // Returns a promise for a POST request, similar to get() above
 function postWithGitHubToken(url, postDataObject) {
   return new Promise(function(succeed, fail) {
-    var req = new XMLHttpRequest();
+    let req = new XMLHttpRequest();
 
     req.open("POST", url, true);
     
@@ -631,7 +621,7 @@ function postWithGitHubToken(url, postDataObject) {
 // Return object from parsed JSON data from a given URL
 // via http://eloquentjavascript.net/17_http.html
 function getJSON(url) {
-  return get(url).then(JSON.parse, handleError);
+  return get(url).then(JSON.parse).catch(handleError);
 }
 
 // Lazy error handling for now
@@ -648,12 +638,12 @@ function getCurrentPlayer() {
 }
 
 function getNextPlayer() {
-	var nextPlayerIndex = (gameState.turnIndex + 1) % gameState.players.length;
+	let nextPlayerIndex = (gameState.turnIndex + 1) % gameState.players.length;
 	return gameState.players[nextPlayerIndex];
 }
 
 function getPlayerById(id, playerList){
-	for (var i = 0; i < playerList.length; i++) {
+	for (let i = 0; i < playerList.length; i++) {
 		if (playerList[i].id === id) {
 			return playerList[i];
 		}
@@ -662,7 +652,7 @@ function getPlayerById(id, playerList){
 }
 
 function getPlayerIndexById(id, playerList) {
-	for (var i = 0; i < playerList.length; i++) {
+	for (let i = 0; i < playerList.length; i++) {
 		if (playerList[i].id === id) {
 			return i;
 		}
@@ -671,7 +661,7 @@ function getPlayerIndexById(id, playerList) {
 }
 
 function removePlayer(id, playerList) {
-	for (var i = 0; i < playerList.length; i++) {
+	for (let i = 0; i < playerList.length; i++) {
 		if (playerList[i].id === id) {
 			playerList.splice(i, 1);
 		}
